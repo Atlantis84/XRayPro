@@ -1,0 +1,9 @@
+import  os
+import copy
+
+Import('*')
+env = env.Clone()
+env.Append(LIBS=['dl', 'pthread'])
+
+instance = env.StaticLibrary('libcommon', source=Glob('*.cpp'))
+Return('instance')

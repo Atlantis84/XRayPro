@@ -1,0 +1,18 @@
+﻿  Detector.cpp
+e:\hisense\xrayexamples\examples\cpp\common\detector.cpp(135): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.18362.0\ucrt\string.h(338): note: 参见“strncpy”的声明
+e:\hisense\xrayexamples\examples\cpp\common\detector.cpp(265): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.18362.0\ucrt\string.h(338): note: 参见“strncpy”的声明
+e:\hisense\xrayexamples\examples\cpp\common\detector.cpp(292): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.18362.0\ucrt\string.h(338): note: 参见“strncpy”的声明
+e:\hisense\xrayexamples\examples\cpp\common\detector.cpp(321): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.18362.0\ucrt\string.h(338): note: 参见“strncpy”的声明
+e:\hisense\xrayexamples\examples\cpp\common\detector.cpp(325): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.18362.0\ucrt\string.h(338): note: 参见“strncpy”的声明
+e:\hisense\xrayexamples\examples\cpp\common\detector.cpp(513): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.18362.0\ucrt\stdio.h(208): note: 参见“fopen”的声明
+e:\hisense\xrayexamples\examples\cpp\common\detector.cpp(522): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.18362.0\ucrt\stdio.h(208): note: 参见“fopen”的声明
+  winevent.cpp
+  正在生成代码...
+  iRayBase.vcxproj -> E:\hisense\XRayExamples\examples\Cpp\Win32\Debug\iRayBase.lib
