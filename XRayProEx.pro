@@ -38,6 +38,7 @@ SOURCES += \
         equipinfowgt.cpp \
         gdatafactory.cpp \
         imessagebox.cpp \
+        leftwidget.cpp \
         main.cpp \
         mainwindow.cpp \
         monitorthread.cpp \
@@ -73,6 +74,7 @@ HEADERS += \
         equipinfowgt.h \
         gdatafactory.h \
         imessagebox.h \
+        leftwidget.h \
         mainwindow.h \
         monitorthread.h \
         paraconfigwgt.h \

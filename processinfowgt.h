@@ -6,6 +6,7 @@
 #include <QLineEdit>
 #include <QGroupBox>
 #include <QTextEdit>
+#include "leftwidget.h"
 class ProcessInfoWgt : public QWidget
 {
     Q_OBJECT
@@ -18,6 +19,8 @@ private:
     QLineEdit* m_pCountTime;
     QLineEdit* m_pProductStyle;
     QLineEdit* m_pCountStep;
+
+    LeftWidget* m_pLeftWgt;
 
 signals:
 

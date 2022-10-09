@@ -32,7 +32,7 @@
 #include "dmdbaccessinterface.h"
 #include <math.h>
 #include <QSqlQuery>
-#include <testwindow.h>
+#include "testwindow.h"
 #include <QTime>
 #include "waitcountwgt.h"
 #include <QThread>

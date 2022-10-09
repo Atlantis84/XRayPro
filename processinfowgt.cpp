@@ -2,6 +2,8 @@
 #include <QVBoxLayout>
 ProcessInfoWgt::ProcessInfoWgt(QWidget *parent) : QWidget(parent)
 {
+    m_pLeftWgt = new LeftWidget();
+
     QVBoxLayout* vAll = new QVBoxLayout();
     vAll->setMargin(0);
     m_pLogEdit = new QTextEdit();
@@ -38,6 +40,7 @@ ProcessInfoWgt::ProcessInfoWgt(QWidget *parent) : QWidget(parent)
     labelCountStep->setAlignment(Qt::AlignCenter);
     labelCountStep->setStyleSheet("font-weight:bold;color:rgb(1,158,161);background-color:rgba(0,0,0,0);font-family:Microsoft YaHei;font-size:20pt;");
 
+    QHBoxLayout* hTop = new QHBoxLayout();
     QVBoxLayout* vTop = new QVBoxLayout();
     vTop->addWidget(labelProductStyle);
     vTop->addWidget(m_pProductStyle);
@@ -47,7 +50,11 @@ ProcessInfoWgt::ProcessInfoWgt(QWidget *parent) : QWidget(parent)
     vTop->addWidget(m_pCountTime);
     vTop->addWidget(labelCountStep);
     vTop->addWidget(m_pCountStep);
-    vAll->addLayout(vTop);
+    hTop->addLayout(vTop);
+    hTop->addWidget(m_pLeftWgt);
+    hTop->setStretch(0,1);
+    hTop->setStretch(1,1);
+    vAll->addLayout(hTop);
     QGroupBox* grpLog = new QGroupBox(u8"过程日志");
     QVBoxLayout* vLog = new QVBoxLayout();
     vLog->addWidget(m_pLogEdit);

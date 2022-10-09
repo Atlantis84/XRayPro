@@ -380,12 +380,12 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
 
     }
 }
-//static int a = 11;
-//static int b = 12;
-//#define test_add() \
-//if(a == 11){\
-//    a = b;\
-//}
+static int a = 11;
+static int b = 12;
+#define test_add() \
+if(a == 11){\
+    a = b;\
+}
 
 void MainWindow::slot_product_management()
 {
