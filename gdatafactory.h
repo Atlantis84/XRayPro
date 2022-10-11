@@ -36,6 +36,9 @@
 #include <QTime>
 #include "waitcountwgt.h"
 #include <QThread>
+#include <QNetworkAccessManager>
+#include "imessagebox.h"
+#include <QDir>
 using namespace std;
 using namespace cv;
 #define READ_PLC  0x01 //function code of read plc
@@ -354,6 +357,36 @@ public:
     void read_serial_number_xray(int functioncode);
     QString bytes_to_str(QByteArray data);
 
+    QStringList find_files(const QString& startDir,QStringList filters,bool _isParent){
+        //m_filters << "*.pdb" << "*.exp"  << "*.db" << "*.log";
+        QStringList names;
+        QDir dir(startDir);
+        foreach(QString file, dir.entryList(filters, QDir::Files))
+            names += startDir + '/' + file;
+        if (_isParent) return names;
+        foreach(QString subdir, dir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot))
+            names += find_files(startDir + '/' + subdir, filters, _isParent);
+        return names;
+    }
+
+    void delete_files(QString folder)
+    {
+        QStringList names;
+        QStringList m_filters;
+        m_filters<<"*.jpg";
+        names = find_files(folder, m_filters, true);
+        for (int i=0;i< names.size();i++)
+        {
+            QString strPath = names.at(i);
+            if (strPath.isEmpty() || !QDir().exists(strPath))
+                return;
+
+            QFileInfo FileInfo(strPath);
+            if (FileInfo.isFile())
+                QFile::remove(strPath);
+        }
+    }
+
     static GDataFactory* get_factory()
     {
         if(m_pDataFactory == nullptr)
@@ -546,6 +579,13 @@ public:
             m_pWaitCountWgt = new WaitCountWgt();
         return m_pWaitCountWgt;
     }
+
+    static QNetworkAccessManager* get_net_work_access_manager()
+    {
+        if(m_pAccessManager == nullptr)
+            m_pAccessManager = new QNetworkAccessManager();
+        return m_pAccessManager;
+    }
 private:
     static TopWidget* m_pTopWgt;
     static MainWindow* m_pMainWindow;
@@ -574,6 +614,7 @@ private:
     static QTime* m_pTimeStepCounter;
     static ProductManageWgt* m_pProductManageWgt;
     static WaitCountWgt* m_pWaitCountWgt;
+    static QNetworkAccessManager *m_pAccessManager;
 signals:
     void signal_spread_pixmap_to_ui(const QPixmap pm);
     void signal_serial_data(QByteArray data);

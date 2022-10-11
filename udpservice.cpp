@@ -20,13 +20,13 @@ void UdpService::release_res()
 
 void UdpService::send_message_to_plc(const uchar function_code, const short data_address, const uchar bit_address,const short data_length, const QByteArray data_array)
 {
-    m_mutex.lock();
+//    m_mutex.lock();
     QHostAddress hAddr(GDataFactory::get_factory()->get_config_para("PLC_IP"));
     int hPort = GDataFactory::get_factory()->get_config_para("PLC_PORT").toInt();
     QByteArray btArray = make_plc_message(function_code,data_address,bit_address,data_length,data_array);
     QLOG_INFO()<<"Send Msg To PLC:"<<GDataFactory::get_factory()->bytes_to_str(btArray);
     m_pUdpSocket->writeDatagram(btArray,btArray.length(),hAddr,static_cast<quint16>(hPort));
-    m_mutex.unlock();
+//    m_mutex.unlock();
 }
 
 QByteArray UdpService::make_plc_message(const uchar function_code, const short data_address, const uchar bit_address,const short data_length, const QByteArray data_array)
@@ -70,7 +70,7 @@ QByteArray UdpService::make_plc_message(const uchar function_code, const short d
 
 void UdpService::slot_receive_message()
 {
-    m_mutex.lock();
+//    m_mutex.lock();
     if(m_pUdpSocket == nullptr)
         return;
     QByteArray datagram;
@@ -79,7 +79,7 @@ void UdpService::slot_receive_message()
     {
         m_pUdpSocket->readDatagram(datagram.data(), datagram.size());
     }
-    m_mutex.unlock();
+//    m_mutex.unlock();
     emit signal_proc_plc_msg(datagram);
 }
 

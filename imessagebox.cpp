@@ -72,8 +72,8 @@ void IMessageBox::warning(QString strInfo)
 {
 
     labelInfo->setText(strInfo);
-    this->show();
-    //    this->exec();
+//    this->show();
+    this->exec();
 }
 
 void IMessageBox::error(QString strInfo)

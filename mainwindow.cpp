@@ -168,7 +168,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
     {
         if(m_pNormalTakePictureSign == true)
         {
-            QLOG_WARN()<<"<<<<<<<<<<<<<<COUNT PRODUCT OVER>>>>>>>>>>>>>>>>>>";
+            QLOG_WARN()<<"--- COUNT PRODUCT OVER ---";
             killTimer(m_pTimerTakePictureOverID);
             m_pNormalTakePictureSign = false;
 
@@ -266,8 +266,7 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
                     breakCount++;
                     GDataFactory::get_camera_interface()->StartGrabbing();
                     GDataFactory::get_camera_interface()->SoftwareTriggerOnce();
-                    QLOG_INFO()<<"while circle to take picture";
-                    QThread::msleep(200);
+                    QThread::msleep(300);
                     image = GDataFactory::get_camera_interface()->GetImage();
                     if(!image.empty() && image.data)
                         break;
@@ -342,9 +341,11 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
                     }
                     else
                     {
-                        QLOG_WARN()<<"read barcode FAILED!";
-                        GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W201,ADDRESS_W201_01,tmpData.length(),tmpData);
+                        QLOG_ERROR()<<u8"∂¡¬Î ß∞‹£°ºÃ–¯∂¡¬ÎªÚ«Î∏¸ªª¡œ≈Ã!";
+//                        GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W201,ADDRESS_W201_01,tmpData.length(),tmpData);
                         m_pTimerID = startTimer(1000);
+//                        IMessageBox* msgBox = new IMessageBox(3);
+//                        msgBox->warning(u8"∂¡¬Î ß∞‹!");
                     }
                 }
                 else

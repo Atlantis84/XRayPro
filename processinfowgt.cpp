@@ -74,6 +74,7 @@ void ProcessInfoWgt::slot_rev_count_result(int countR, double aTime)
 {
     m_pProductAmount->setText(QString::number(countR));
     m_pCountTime->setText(QString("%1").arg(aTime));
+    this->m_pLeftWgt->set_count_total();
 }
 
 void ProcessInfoWgt::slot_rev_bar_code(QString pStyle)

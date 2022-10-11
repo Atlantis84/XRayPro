@@ -7,7 +7,6 @@
 #include <QSqlQuery>
 #include <QDateTime>
 #include <QFile>
-#include <QNetworkAccessManager>
 #include <QTimer>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -44,6 +43,7 @@ TestWindow* GDataFactory::m_pTestWindow = nullptr;
 QTime* GDataFactory::m_pTimeStepCounter = nullptr;
 ProductManageWgt* GDataFactory::m_pProductManageWgt = nullptr;
 WaitCountWgt* GDataFactory::m_pWaitCountWgt = nullptr;
+QNetworkAccessManager* GDataFactory::m_pAccessManager = nullptr;
 
 QImage GDataFactory::mat_to_qimage(const Mat &cvImage)
 {
@@ -97,7 +97,7 @@ void GDataFactory::set_sender_power(QString strStyle)
 
 void GDataFactory::get_step_and_threshold_run(float &step, float &threshold)
 {
-    QLOG_WARN()<<"running product style is:"<<m_pCurrentProductStyle;
+    QLOG_WARN()<<"the current product-style is:"<<m_pCurrentProductStyle;
     QString strSql = QString("select * from public.%1 where \"Product_Style_Code\"='%2'").
             arg(constProductStylePowerTable).arg(m_pCurrentProductStyle);
     QSqlQuery queryResult;
@@ -126,13 +126,23 @@ static float m_pVisionThreshold;
 
 void GDataFactory::count_product()
 {
-    QLOG_WARN()<<"******************start count********************";
+    QLOG_WARN()<<"--- START COUNTING ---";
 
     normalProductStyle = m_pCurrentProductStyle;
     QString tmpProductStyle = m_pCurrentProductStyle;
     tmpProductStyle.prepend("f:/template/");
     tmpProductStyle.append(".png");
-    QLOG_WARN()<<"current template is:"<<tmpProductStyle;
+
+    QFile file(tmpProductStyle);
+    if(file.exists())
+        ;
+    else
+    {
+        IMessageBox* msgBox = new IMessageBox(3);
+        msgBox->warning(u8"模板文件不存在，请制作模板文件");
+        return;
+    }
+
     tempMat = cv::imread(tmpProductStyle.toStdString());
     currentFullImage = get_current_image_mat();
 
@@ -171,11 +181,11 @@ void NormalCountThread::run()
         t.setImage(currentFullImage);
         t.setTemplateImage(tempMat);
         t.setMaxMatch(20000);
-        QLOG_WARN()<<"the step is:"<<m_pVisionStep<<";the threshold is:"<<m_pVisionThreshold;
+//        QLOG_WARN()<<"the step is:"<<m_pVisionStep<<";the threshold is:"<<m_pVisionThreshold;
         if((m_pVisionStep>0.0)&&(m_pVisionStep < 1.0))
         {
             t.setAngleStep(m_pVisionStep);
-            QLOG_WARN()<<"use DB step";
+//            QLOG_WARN()<<"use DB step";
         }
         else
             t.setAngleStep(0.5);
@@ -183,7 +193,7 @@ void NormalCountThread::run()
         if((m_pVisionStep>0.0)&&(m_pVisionStep < 1.0))
         {
             t.setThreshold(m_pVisionThreshold);
-            QLOG_WARN()<<"use DB threshold";
+//            QLOG_WARN()<<"use DB threshold";
         }
         else {
             t.setThreshold(0.75);
@@ -206,7 +216,7 @@ void GDataFactory::slot_normal_count_over(int amount, double counttime)
     emit signal_notify_time_step(QString("%1").arg(GDataFactory::get_time_step_counter()->elapsed()/1000.0));
     emit signal_notify_count_result(amount,counttime);
     //post msg to MES
-    submit_msg_to_mes(QString("%1").arg(amount),m_pCurrentFullSN);
+    submit_msg_to_mes(m_pCurrentFullSN,QString("%1").arg(amount));
 }
 
 void GDataFactory::submit_msg_to_mes(QString currentSN, QString productQuantity)
@@ -234,10 +244,10 @@ void GDataFactory::submit_msg_to_mes(QString currentSN, QString productQuantity)
     QJsonDocument doc_data(reqJson);
     QByteArray request_data = doc_data.toJson(QJsonDocument::Compact);
 
-    QNetworkAccessManager *accessManager = new QNetworkAccessManager(this);
+//    QNetworkAccessManager *accessManager = new QNetworkAccessManager(this);
     QString rInfo = "info=";
     rInfo.append(request_data);
-    reply = accessManager->post(*request,rInfo.toUtf8());
+    reply = get_net_work_access_manager()->post(*request,rInfo.toUtf8());
     connect(reply,SIGNAL(finished()),&eventloop,SLOT(quit()));
     //set get request time out
     QTimer::singleShot(5000,&eventloop,&QEventLoop::quit);
@@ -259,11 +269,12 @@ void GDataFactory::submit_msg_to_mes(QString currentSN, QString productQuantity)
                 QLOG_INFO()<<"submit product info to mes SUCCESS!";
             else {
                 QLOG_WARN()<<"submit product info to mes FAILED!";
+                QLOG_WARN()<<"the MES reply of RES is:"<<jsonObject.value(QStringLiteral("RES")).toString();
                 QLOG_WARN()<<"FAILED reason is:"<<jsonObject.value(QStringLiteral("RESMSG")).toString();
             }
         }
         else
-            QLOG_INFO()<<"MES reply is ABNORMAL!";
+            QLOG_WARN()<<"MES reply is ABNORMAL!";
     }
     else
     {

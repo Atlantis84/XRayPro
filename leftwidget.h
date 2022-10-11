@@ -12,6 +12,9 @@ public:
     void paintEvent(QPaintEvent *event);
     void timerEvent(QTimerEvent *event);
     void wheelEvent(QWheelEvent *event);
+    void set_count_total(){DelayValue-=5;this->repaint();}
+private:
+
     int DelayValue;
 
 signals:

@@ -36,13 +36,15 @@ int main(int argc, char *argv[])
     logger.addDestination(controlDestination);
     QLOG_INFO()<<u8"QsLog init SUCCESS";
 
-//    int okValue = GDataFactory::get_camera_interface()->OpenCamera();
-//    if(okValue == 0)
-//        QLOG_INFO()<<"open camera success";
-//    else {
-//        QLOG_WARN()<<"open camera failed";
-//        return -1;
-//    }
+    int okValue = GDataFactory::get_camera_interface()->OpenCamera();
+    if(okValue == 0)
+        QLOG_INFO()<<"open camera success";
+    else {
+        QLOG_WARN()<<"open camera failed";
+        IMessageBox* msgBox = new IMessageBox(3);
+        msgBox->warning(u8"打开相机失败,程序退出!");
+        return -1;
+    }
 
 //    GDataFactory::get_test_window()->show();
 //    return a.exec();
@@ -56,6 +58,7 @@ int main(int argc, char *argv[])
     }
 
     QString binDir=QApplication::applicationDirPath();
+    GDataFactory::get_factory()->delete_files(binDir);
     QString fileName("config.json");
 
     QStringList searchList;
@@ -102,8 +105,8 @@ int main(int argc, char *argv[])
     GDataFactory::get_factory()->connections_initialization();
 
     GDataFactory::get_factory()->set_system_status(Init_Status);
-//    GDataFactory::get_monitor_thread()->start();
-//    GDataFactory::get_welcome_dlg()->exec();
+    GDataFactory::get_monitor_thread()->start();
+    GDataFactory::get_welcome_dlg()->exec();
 
     QDesktopWidget *desktop = QApplication::desktop();
     GDataFactory::get_top_wgt()->move((desktop->width()-GDataFactory::get_top_wgt()->width())/2,
