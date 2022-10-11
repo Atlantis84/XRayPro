@@ -53,9 +53,6 @@ ParaConfigWgt::ParaConfigWgt(QWidget *parent) : QWidget(parent)
 
     QLabel* labelProductStyle = new QLabel(u8"产品类型:");
     hBox2->addWidget(labelProductStyle);
-    for(int i=0;i<GDataFactory::get_factory()->get_product_style_list().length();i++)
-        cmbProductStyle->insertItem(i,GDataFactory::get_factory()->get_product_style_list()[i]);
-    cmbProductStyle->setCurrentIndex(0);
     hBox2->addWidget(cmbProductStyle);
 
     for(int i=0;i<GDataFactory::get_factory()->get_voltage_list().length();i++)

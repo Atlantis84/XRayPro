@@ -42,16 +42,11 @@ ProductManageWgt::ProductManageWgt(QWidget *parent) : QWidget(parent)
     QValidator *validator = new QRegExpValidator(regx,leSecondSecCode);
     leSecondSecCode->setValidator(validator);
     QLabel* labelProductStyle = new QLabel(u8"   产品类型:");
-    cmb_product_style = new QComboBox();
-    for(int i=0;i<GDataFactory::get_factory()->get_product_style_list().length();i++)
-        cmb_product_style->insertItem(i,GDataFactory::get_factory()->get_product_style_list()[i]);
-    cmb_product_style->setCurrentIndex(0);
-//    cmb_product_style->setStyleSheet("min-width:150px;max-width:150px;");
-//    leProductStyle = new QLineEdit();
-//    leProductStyle->setAlignment(Qt::AlignCenter);
-//    QRegExp regx1("[0-9]+$");
-//    QValidator *validator1 = new QRegExpValidator(regx1,leProductStyle);
-//    leProductStyle->setValidator(validator1);
+//    cmb_product_style = new QComboBox();
+    leProductStyle = new QLineEdit();
+    leProductStyle->setAlignment(Qt::AlignCenter);
+    leProductStyle->setStyleSheet("min-width:150px;max-width:150px;");
+
     QGroupBox* grpConfigData = new QGroupBox(u8"配置信息");
     QPushButton* btnQuery = new QPushButton(u8" 查  询 ");
     connect(btnQuery,SIGNAL(clicked()),this,SLOT(slot_query()));
@@ -66,7 +61,7 @@ ProductManageWgt::ProductManageWgt(QWidget *parent) : QWidget(parent)
 
     QHBoxLayout* hBox2 = new QHBoxLayout();
     hBox2->addWidget(labelProductStyle);
-    hBox2->addWidget(cmb_product_style);
+    hBox2->addWidget(leProductStyle);
     QVBoxLayout* vBox2 = new QVBoxLayout();
     vBox2->addLayout(hBox1);
     vBox2->addLayout(hBox2);
@@ -130,6 +125,28 @@ void ProductManageWgt::paintEvent(QPaintEvent *event)
 void ProductManageWgt::showEvent(QShowEvent *event)
 {
     Q_UNUSED(event);
+
+//    cmb_product_style->clear();
+//    QMap<QString,QString> tmpProductInfo;
+//    tmpProductInfo = GDataFactory::get_factory()->get_product_info();
+//    QMap<QString,QString>::Iterator itr = tmpProductInfo.begin();
+//    QList<QString> lstProductStyle;
+//    while(itr != tmpProductInfo.end())
+//    {
+//        if(lstProductStyle.contains(itr.value()))
+//        {
+//            itr++;
+//            continue;
+//        }
+//        lstProductStyle.push_back(itr.value());
+//        itr++;
+//    }
+
+//    for(int i=0;i<lstProductStyle.length();i++)
+//        cmb_product_style->insertItem(i,lstProductStyle[i]);
+
+//    cmb_product_style->setCurrentIndex(0);
+
     set_table_data();
 }
 
@@ -160,12 +177,22 @@ void ProductManageWgt::set_table_data_query()
 
     QMap<QString,QString> tmpProductInfo;
     QString strSql;
-    if(this->leSecondSecCode->text().trimmed() != "")
+    if((this->leSecondSecCode->text().trimmed() != "") && (this->leProductStyle->text().trimmed() != ""))
         strSql = QString("select * from public.%1 where \"Product_Style_Code\"='%2' and \"Second_Section_Code\"='%3'").
-                arg(constProductStyleMapTable).arg(this->cmb_product_style->currentText()).arg(this->leSecondSecCode->text());
+                arg(constProductStyleMapTable).arg(this->leProductStyle->text()).arg(this->leSecondSecCode->text());
     else
-        strSql = QString("select * from public.%1 where \"Product_Style_Code\"='%2'").
-                arg(constProductStyleMapTable).arg(this->cmb_product_style->currentText());
+    {
+        if(this->leProductStyle->text().trimmed() != "")
+            strSql = QString("select * from public.%1 where \"Product_Style_Code\"='%2'").
+                    arg(constProductStyleMapTable).arg(this->leProductStyle->text());
+        else if(this->leSecondSecCode->text().trimmed() != "")
+            strSql = QString("select * from public.%1 where \"Second_Section_Code\"='%2'").
+                    arg(constProductStyleMapTable).arg(this->leSecondSecCode->text());
+        else
+            strSql = QString("select * from public.%1").
+                    arg(constProductStyleMapTable);
+    }
+
 
     QSqlQuery queryResult;
     if(GDataFactory::get_pgsql()->GetQueryResult(strSql,queryResult))
@@ -204,15 +231,15 @@ void ProductManageWgt::slot_query()
 void ProductManageWgt::slot_add()
 {
     IMessageBox* msg = new IMessageBox(3);
-    if((this->leSecondSecCode->text() == "") || (this->cmb_product_style->currentText() == ""))
+    if((this->leSecondSecCode->text() == "") || (this->leProductStyle->text() == ""))
     {
-        msg->warning("operation of adding, section code and product style has to be not NULL");
+        msg->warning(u8"添加操作，参数不允许为空!");
         return;
     }
 
     //set sender para
-    QString strSql = QString("select * from public.%1 where \"Product_Style_Code\"='%2' and \"Second_Section_Code\"='%3'").
-            arg(constProductStyleMapTable).arg(this->cmb_product_style->currentText()).arg(this->leSecondSecCode->text());
+    QString strSql = QString("select * from public.%1 where \"Second_Section_Code\"='%2'").
+            arg(constProductStyleMapTable).arg(this->leSecondSecCode->text());
     QSqlQuery queryResult;
     QString strError;
     if(GDataFactory::get_pgsql()->GetQueryResult(strSql,queryResult))
@@ -222,7 +249,7 @@ void ProductManageWgt::slot_add()
         {
             strSql = QString("insert into %1 values('%2','%3')").
                     arg(constProductStyleMapTable).arg(this->leSecondSecCode->text()).
-                    arg(this->cmb_product_style->currentText());
+                    arg(this->leProductStyle->text());
             if(GDataFactory::get_pgsql()->ExecSql(strSql,strError))
             {
                 QLOG_INFO()<<"insert into DB SUCCESS!";
@@ -234,6 +261,7 @@ void ProductManageWgt::slot_add()
         }
         else//update current row
         {
+            msg->warning(u8"数据库中已存在该物料!");
             QLOG_WARN()<<"current info already exist in the DB";
         }
     }

@@ -19,13 +19,10 @@ void LeftWidget::paintEvent(QPaintEvent *event)
     painter.fillRect(QRectF(0,0,
                             this->width(),this->height()),QBrush(Linear));
 
-    painter.setPen(QPen(QColor(255,0,0),1));
-    painter.drawLine(0,this->height()/2,this->width(),this->height()/2);
-
-    painter.setFont(QFont(u8"楷体",40,QFont::Bold,false));
-    painter.setPen(QPen(QColor(100,100,100),5));
+    painter.setFont(QFont(u8"微软雅黑",30,QFont::Bold,false));
+    painter.setPen(QPen(QColor(1,158,161),5));
     QRect rtText1(0,0,this->width(),this->height()/2);
-    painter.drawText(rtText1,Qt::AlignHCenter | Qt::AlignVCenter,u8"料盘总数");
+    painter.drawText(rtText1,Qt::AlignHCenter | Qt::AlignVCenter,u8"当前清点\r\n料盘总数");
 
     painter.setPen(QPen(QColor(0,0,0),2));
     painter.setFont(QFont("宋体",12,QFont::Light,false));
@@ -43,6 +40,9 @@ void LeftWidget::paintEvent(QPaintEvent *event)
             painter.drawLine(this->width()-10,this->height()/2+i*5+DelayValue,this->width(),this->height()/2+i*5+DelayValue);
         }
     }
+
+    painter.setPen(QPen(QColor(255,0,0),1));
+    painter.drawLine(0,this->height()/2,this->width(),this->height()/2);
 
     painter.setPen(QPen(QColor(255,255,255,100),2));
     painter.drawRect(this->rect());

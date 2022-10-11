@@ -31,9 +31,7 @@ TemplateConfigWgt::TemplateConfigWgt(QWidget *parent) : QWidget(parent)
     cmb_product_style->setStyleSheet("QComboBox{border:1px solid rgba(0,0,0,100);font-family:Microsoft YaHei;font-size:20px;"
                                            "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:100px;}"
                                            "QComboBox:hover{border:2px solid rgba(0,0,0,100);}");
-//    for(int i=0;i<GDataFactory::get_factory()->get_product_style_list().length();i++)
-//        cmb_product_style->insertItem(i,GDataFactory::get_factory()->get_product_style_list()[i]);
-//    cmb_product_style->setCurrentIndex(0);
+
     hBox_7->addWidget(labelProStyle);
     hBox_7->addWidget(cmb_product_style);
 

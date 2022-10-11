@@ -133,7 +133,6 @@ private:
 
     QString m_pCurrentVoltage;
     QString m_pCurrentCurrent;
-    QList<QString> m_pProductStyleList;
     QList<QString> m_pVoltageList;
     QList<QString> m_pCurrentList;
 
@@ -167,11 +166,6 @@ public:
     QPixmap mat_to_pixmap(const Mat& cvImage);
 
     void set_sender_power(QString strStyle);
-
-    QList<QString> get_product_style_list()
-    {
-        return m_pProductStyleList;
-    }
 
     QList<QString> get_voltage_list()
     {

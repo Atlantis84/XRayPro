@@ -108,8 +108,8 @@ void GDataFactory::get_step_and_threshold_run(float &step, float &threshold)
         {
             step = queryResult.value(3).toFloat();
             threshold = queryResult.value(4).toFloat();
-            QLOG_WARN()<<"the vision step in DB is:"<<step;
-            QLOG_WARN()<<"the vision threshold in DB is:"<<threshold;
+//            QLOG_WARN()<<"the vision step in DB is:"<<step;
+//            QLOG_WARN()<<"the vision threshold in DB is:"<<threshold;
         }
     }
     else
@@ -126,7 +126,7 @@ static float m_pVisionThreshold;
 
 void GDataFactory::count_product()
 {
-    QLOG_WARN()<<"--- START COUNTING ---";
+    QLOG_WARN()<<u8"--- 开始点料 ---";
 
     normalProductStyle = m_pCurrentProductStyle;
     QString tmpProductStyle = m_pCurrentProductStyle;
@@ -268,9 +268,9 @@ void GDataFactory::submit_msg_to_mes(QString currentSN, QString productQuantity)
             if(jsonObject.value(QStringLiteral("RES")).toString() == "OK")
                 QLOG_INFO()<<"submit product info to mes SUCCESS!";
             else {
-                QLOG_WARN()<<"submit product info to mes FAILED!";
-                QLOG_WARN()<<"the MES reply of RES is:"<<jsonObject.value(QStringLiteral("RES")).toString();
-                QLOG_WARN()<<"FAILED reason is:"<<jsonObject.value(QStringLiteral("RESMSG")).toString();
+                QLOG_WARN()<<u8"点料信息上传Mes失败!";
+                QLOG_WARN()<<u8"Mes 返回 RES:"<<jsonObject.value(QStringLiteral("RES")).toString();
+                QLOG_WARN()<<u8"上传失败原因:"<<jsonObject.value(QStringLiteral("RESMSG")).toString();
             }
         }
         else
@@ -408,25 +408,6 @@ void GDataFactory::load_json_config(char *filename)
         }
 
         m_pRootObj = m_pJsonDocument.object();
-        if(m_pRootObj.contains("ProductStyle"))
-        {
-            m_pProductStyleList.clear();
-            QJsonValue arrayValue = m_pRootObj.value(QStringLiteral("ProductStyle"));
-            if(arrayValue.isArray())
-            {
-                QJsonArray array = arrayValue.toArray();
-                for (int i=0;i<array.size();i++)
-                {
-                    QJsonValue tmpAValue = array.at(i);
-                    if(tmpAValue.isObject())
-                    {
-                        QJsonObject aObj = tmpAValue.toObject();
-                        QString tmpAStr = "Product"+QString::number(i+1);
-                        m_pProductStyleList.push_back(aObj.value(tmpAStr).toString());
-                    }
-                }
-            }
-        }
 
         if(m_pRootObj.contains("SenderVoltage"))
         {

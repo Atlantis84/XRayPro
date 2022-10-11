@@ -168,7 +168,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
     {
         if(m_pNormalTakePictureSign == true)
         {
-            QLOG_WARN()<<"--- COUNT PRODUCT OVER ---";
+            QLOG_WARN()<<u8"--- µãÁÏ½áÊø ---";
             killTimer(m_pTimerTakePictureOverID);
             m_pNormalTakePictureSign = false;
 
@@ -180,6 +180,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
     }
     else if(event->timerId() == m_pTimerMonitorID)
     {
+        return;
         m_pTimeOut++;
         if(m_pTimeOut == 5)
         {
@@ -286,7 +287,10 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
 
                     vector<vector<string>> allCodeSegs;
                     for(int i=0;i<ss.size();i++)
+                    {
+                        QLOG_WARN()<<QString("%1").fromStdString(ss[i]);
                         allCodeSegs.push_back(split_string(ss[i],"-"));
+                    }
 
                     vector<string> currentPCode;
                     for(int i=0;i<allCodeSegs.size();i++)
@@ -310,6 +314,7 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
                             if(i<3)
                                 tmpFullSN.append("-");
                         }
+                        GDataFactory::get_factory()->set_current_full_sn(tmpFullSN);
                         //check template file exist or not
                         QString checkStyleExist = strStyle;
                         checkStyleExist.append(".png");
@@ -331,7 +336,6 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
                         //3¡¢set the sender's power
 
                         GDataFactory::get_factory()->set_sender_power(strStyle);
-
                         GDataFactory::get_factory()->read_serial_number_xray(5);//set sender's vp
                         QThread::msleep(200);
                         GDataFactory::get_factory()->read_serial_number_xray(6);//set sender's cp
