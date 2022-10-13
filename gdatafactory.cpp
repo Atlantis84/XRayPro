@@ -138,6 +138,9 @@ void GDataFactory::count_product()
         ;
     else
     {
+        QByteArray tmpData;
+        tmpData.append(static_cast<char>(0x01));
+        GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W201,ADDRESS_W201_01,tmpData.length(),tmpData);
         IMessageBox* msgBox = new IMessageBox(3);
         msgBox->warning(u8"模板文件不存在，请制作模板文件");
         return;
@@ -338,6 +341,7 @@ void GDataFactory::connections_initialization()
     connect(this,SIGNAL(signal_serial_data(QByteArray)),get_elec_manual_wgt(),SLOT(slot_process_serial_data(QByteArray)));
     connect(get_udp_service(),SIGNAL(signal_notify_app_by_plc(QByteArray)),get_main_window(),SLOT(slot_proc_plc_notify(QByteArray)));
     connect(get_udp_service(),SIGNAL(signal_notify_app_by_manual(QByteArray)),get_elec_manual_wgt(),SLOT(slot_process_udp_data(QByteArray)));
+    connect(get_main_window(),SIGNAL(signal_enable_disable_threshold_button(bool)),get_process_info_wgt(),SLOT(slot_rev_button_control_sign(bool)));
 }
 
 int GDataFactory::initialize_xray()
@@ -880,5 +884,28 @@ QString GDataFactory::get_product_style(QString strSN)
 
     m_pCurrentProductStyle = strStyle;
     return strStyle;
+}
+
+QList<QString> GDataFactory::get_product_style_list()
+{
+    QList<QString> lstProductStyle;
+    lstProductStyle.clear();
+
+    QString strSql = QString("select * from public.%1").
+            arg(constProductStylePowerTable);
+    QSqlQuery queryResult;
+    if(get_pgsql()->GetQueryResult(strSql,queryResult))
+    {
+        QLOG_TRACE()<<u8"query database success!";
+        while(queryResult.next())
+        {
+            lstProductStyle.push_back(queryResult.value(0).toString());
+        }
+    }
+    else
+    {
+        QLOG_WARN()<<u8"query database failed!";
+    }
+    return lstProductStyle;
 }
 

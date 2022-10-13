@@ -45,6 +45,8 @@ public slots:
     void slot_para_set();
     void slot_proc_plc_notify(QByteArray data);
     void slot_product_management();
+signals:
+    void signal_enable_disable_threshold_button(bool sign);
 };
 
 #endif // MAINWINDOW_H

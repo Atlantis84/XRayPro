@@ -177,6 +177,8 @@ public:
         return m_pCurrentList;
     }
 
+    QList<QString> get_product_style_list();
+
     void set_sender_voltage(QString strV)
     {
         m_pCurrentVoltage = strV;

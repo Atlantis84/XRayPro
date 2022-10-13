@@ -215,6 +215,7 @@ void MainWindow::slot_start_run()
         this->visionTemplateAct->setEnabled(false);
         this->portSetAct->setEnabled(false);
         this->productManagementAct->setEnabled(false);
+        emit signal_enable_disable_threshold_button(false);
     }
     else
     {
@@ -226,6 +227,7 @@ void MainWindow::slot_start_run()
         this->visionTemplateAct->setEnabled(true);
         this->portSetAct->setEnabled(true);
         this->productManagementAct->setEnabled(true);
+        emit signal_enable_disable_threshold_button(true);
     }
 }
 
@@ -280,15 +282,20 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
 
                 if (!image.empty() && image.data)
                 {
+                    Mat src2;
+                    Mat kernel = (Mat_<float>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
+                    filter2D(image, src2,CV_8UC3, kernel);
+
                     GDataFactory::get_factory()->scan_camera_mat_to_pixmap(image);
                     vector<string> ss;
                     vector<RotatedRect> pp;
+                    image = src2;
                     GDataFactory::get_bar_code_decoding()->decode_h(image,ss,pp);
 
                     vector<vector<string>> allCodeSegs;
                     for(int i=0;i<ss.size();i++)
                     {
-                        QLOG_WARN()<<QString("%1").fromStdString(ss[i]);
+//                        QLOG_WARN()<<QString("%1").fromStdString(ss[i]);
                         allCodeSegs.push_back(split_string(ss[i],"-"));
                     }
 

@@ -22,6 +22,14 @@ int main(int argc, char *argv[])
     QString qssFile = ":/icon/darkgray.qss";
     QFile file(qssFile);
     qDebug()<<QSqlDatabase::drivers();
+
+    if(GDataFactory::get_pgsql()->ConnectDataBase())
+        QLOG_INFO()<<"connect to db success!";
+    else {
+        QLOG_FATAL()<<"connect to db failed!";
+        QApplication::exit(1);
+    }
+
     Logger& logger = Logger::instance();
 //    logger.setLoggingLevel(QsLogging::TraceLevel);
 
@@ -94,13 +102,6 @@ int main(int argc, char *argv[])
         logger.setLoggingLevel(QsLogging::FatalLevel);
     else
         logger.setLoggingLevel(QsLogging::OffLevel);
-
-    if(GDataFactory::get_pgsql()->ConnectDataBase())
-        QLOG_INFO()<<"connect to db success!";
-    else {
-        QLOG_FATAL()<<"connect to db failed!";
-        QApplication::exit(1);
-    }
 
     GDataFactory::get_factory()->connections_initialization();
 
