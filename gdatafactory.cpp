@@ -106,10 +106,13 @@ void GDataFactory::get_step_and_threshold_run(float &step, float &threshold)
         QLOG_TRACE()<<u8"get product info, query database success!";
         while(queryResult.next())
         {
+            float a = queryResult.value(4).toFloat();
+            emit signal_send_current_threshold(QString("%1").arg(a));
             step = queryResult.value(3).toFloat();
             threshold = queryResult.value(4).toFloat();
 //            QLOG_WARN()<<"the vision step in DB is:"<<step;
 //            QLOG_WARN()<<"the vision threshold in DB is:"<<threshold;
+
         }
     }
     else
@@ -342,6 +345,7 @@ void GDataFactory::connections_initialization()
     connect(get_udp_service(),SIGNAL(signal_notify_app_by_plc(QByteArray)),get_main_window(),SLOT(slot_proc_plc_notify(QByteArray)));
     connect(get_udp_service(),SIGNAL(signal_notify_app_by_manual(QByteArray)),get_elec_manual_wgt(),SLOT(slot_process_udp_data(QByteArray)));
     connect(get_main_window(),SIGNAL(signal_enable_disable_threshold_button(bool)),get_process_info_wgt(),SLOT(slot_rev_button_control_sign(bool)));
+    connect(this,SIGNAL(signal_send_current_threshold(QString)),get_process_info_wgt(),SLOT(slot_rev_current_threshold(QString)));
 }
 
 int GDataFactory::initialize_xray()

@@ -21,6 +21,8 @@ private:
     QLineEdit* m_pCountTime;
     QLineEdit* m_pProductStyle;
     QLineEdit* m_pCountStep;
+    QLineEdit* m_pCurrentThreshold;
+
     QComboBox* m_pCmbProductStyle;
     QComboBox* m_pCmbThreshold;
     QPushButton* btnUpdate;
@@ -36,6 +38,7 @@ public slots:
     void slot_rev_count_step(QString step);
     void slot_update_threshold();
     void slot_rev_button_control_sign(bool sign);
+    void slot_rev_current_threshold(QString tr);
 };
 
 #endif // PROCESSINFOWGT_H

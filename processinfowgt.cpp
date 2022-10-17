@@ -50,10 +50,17 @@ ProcessInfoWgt::ProcessInfoWgt(QWidget *parent) : QWidget(parent)
         m_pCmbProductStyle->insertItem(i,GDataFactory::get_factory()->get_product_style_list()[i]);
     m_pCmbProductStyle->setCurrentIndex(-1);
     m_pCmbProductStyle->setStyleSheet("QComboBox{border:1px solid rgba(0,0,0,100);font-family:Microsoft YaHei;font-size:20px;"
-                                      "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:150px;}"
+                                      "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:120px;}"
                                       "QComboBox:hover{border:2px solid rgba(0,0,0,100);}");
 
-    QLabel* lThreshold = new QLabel(u8"点料门限:");
+    QLabel* lCurrentThreshold = new QLabel(u8"当前门限:");
+    lCurrentThreshold->setStyleSheet("background-color:rgba(0,0,0,0);");
+    m_pCurrentThreshold = new QLineEdit();
+    m_pCurrentThreshold->setReadOnly(true);
+    m_pCurrentThreshold->setAlignment(Qt::AlignCenter);
+    m_pCurrentThreshold->setStyleSheet("min-width:100px;font-weight:bold;font-family:Microsoft YaHei;font-size:20px;background-color:rgba(0,0,0,0);");
+
+    QLabel* lThreshold = new QLabel(u8"设置门限:");
     lThreshold->setStyleSheet("background-color:rgba(0,0,0,0);");
     m_pCmbThreshold = new QComboBox();
     float aValue = 0.49;
@@ -64,14 +71,16 @@ ProcessInfoWgt::ProcessInfoWgt(QWidget *parent) : QWidget(parent)
     }
     m_pCmbThreshold->setCurrentIndex(-1);
     m_pCmbThreshold->setStyleSheet("QComboBox{border:1px solid rgba(0,0,0,100);font-family:Microsoft YaHei;font-size:20px;"
-                                          "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:150px;}"
+                                          "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:100px;}"
                                           "QComboBox:hover{border:2px solid rgba(0,0,0,100);}");
-    btnUpdate = new QPushButton(u8" 修 改 门 限 值 ");
+    btnUpdate = new QPushButton(u8" 修改门限值 ");
     connect(btnUpdate,SIGNAL(clicked()),this,SLOT(slot_update_threshold()));
-    btnUpdate->setStyleSheet("background-color:rgba(0,0,0,0);min-width:150px;");
+    btnUpdate->setStyleSheet("background-color:rgba(0,0,0,0);min-width:100px;");
     hBoxThreshold->addStretch();
     hBoxThreshold->addWidget(lProductStyle);
     hBoxThreshold->addWidget(m_pCmbProductStyle);
+    hBoxThreshold->addWidget(lCurrentThreshold);
+    hBoxThreshold->addWidget(m_pCurrentThreshold);
     hBoxThreshold->addWidget(lThreshold);
     hBoxThreshold->addWidget(m_pCmbThreshold);
     hBoxThreshold->addWidget(btnUpdate);
@@ -95,7 +104,7 @@ ProcessInfoWgt::ProcessInfoWgt(QWidget *parent) : QWidget(parent)
     hTop->setStretch(1,1);
     vAll->addLayout(hTop);
 
-    QGroupBox* grpPara = new QGroupBox(u8"点料门限");
+    QGroupBox* grpPara = new QGroupBox(u8"产品点料门限设置");
     grpPara->setLayout(hBoxThreshold);
     vAll->addWidget(grpPara);
     QGroupBox* grpLog = new QGroupBox(u8"过程日志");
@@ -151,4 +160,10 @@ void ProcessInfoWgt::slot_update_threshold()
 void ProcessInfoWgt::slot_rev_button_control_sign(bool sign)
 {
     this->btnUpdate->setEnabled(sign);
+}
+
+void ProcessInfoWgt::slot_rev_current_threshold(QString tr)
+{
+//    QLOG_WARN()<<"current threshold is:"<<tr;
+    m_pCurrentThreshold->setText(tr);
 }

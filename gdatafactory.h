@@ -618,6 +618,7 @@ signals:
     void signal_notify_bar_code(QString pStyle);
     void signal_notify_time_step(QString step);
     void signal_start_to_count();
+    void signal_send_current_threshold(QString tr);
 public slots:
     void slot_start_to_count();
     void slot_rev_serial_number(const QByteArray& data);
