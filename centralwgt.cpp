@@ -30,7 +30,7 @@ CentralWgt::CentralWgt(QWidget *parent) : QWidget(parent)
     grpBoxInfo->setLayout(vRight);
     hAll->addWidget(grpBoxPixmap);
     hAll->addWidget(grpBoxInfo);
-    hAll->setStretch(0,1);
+    hAll->setStretch(0,2);
     hAll->setStretch(1,1);
     vAll->addLayout(hAll);
     this->setLayout(vAll);

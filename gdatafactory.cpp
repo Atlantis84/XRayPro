@@ -497,6 +497,8 @@ void GDataFactory::load_json_config(char *filename)
                     ConfigInfo.insert("AUTHORIZATION",obj.value("AUTHORIZATION").toString());
                 if(obj.contains("LOG_LEVEL"))
                     ConfigInfo.insert("LOG_LEVEL",obj.value("LOG_LEVEL").toString());
+                if(obj.contains("IMAGE_STRETCH_FILL"))
+                    ConfigInfo.insert("IMAGE_STRETCH_FILL",obj.value("IMAGE_STRETCH_FILL").toString());
             }
         }
     }

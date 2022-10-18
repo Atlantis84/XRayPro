@@ -23,7 +23,7 @@ AboutWgt::AboutWgt(QWidget *parent) : QWidget(parent)
     QLabel* lbText = new QLabel();
 //    lbText->setFont(QFont("Times New Roman",5,QFont::Normal,true));
     lbText->setStyleSheet("font-family:·ÂËÎ;font-size:20px;");
-    lbText->setText("Vision Leading software 1.0\r\n\r\n\
+    lbText->setText("XRay software 1.0 author Atlantis Li\r\n\r\n\
 Based on Qt 5.12.4 (MSVC 2017, 64 bit) by Qt Creator 4.9.1\r\n\
 \r\n\
 Built on December 1 2021 00:00:00\r\n\

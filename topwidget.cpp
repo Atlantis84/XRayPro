@@ -10,11 +10,11 @@ TopWidget::TopWidget(QWidget *parent) : QWidget(parent)
     setWindowFlags(Qt::FramelessWindowHint | windowFlags() | Qt::Widget);
     setWindowIcon(QIcon(":/icon/24x24.png"));
     this->setStyleSheet("QWidget{background-color:#000000}");
-    resize(1550,1000);
+    resize(1800,1000);
 
     TitleBar *pTitleBar = new TitleBar(this);
     pTitleBar->setTitle(u8"X-RAYµãÁÏ»ú");
-    pTitleBar->setFixedWidth(1550);
+    pTitleBar->setFixedWidth(1800);
     installEventFilter(pTitleBar);
 
     QVBoxLayout* vAll = new QVBoxLayout();

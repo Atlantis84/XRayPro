@@ -14,6 +14,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include "imessagebox.h"
+#include <QCoreApplication>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -264,21 +266,36 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
                 bool foundSign = false;
                 cv::Mat image;
                 int breakCount = 0;
-                while(1)
-                {
-                    breakCount++;
-                    GDataFactory::get_camera_interface()->StartGrabbing();
-                    GDataFactory::get_camera_interface()->SoftwareTriggerOnce();
-                    QThread::msleep(300);
-                    image = GDataFactory::get_camera_interface()->GetImage();
-                    if(!image.empty() && image.data)
-                        break;
-                    if(breakCount == 10)
-                    {
-                        QLOG_WARN()<<"take picture failed,please restart";
-                        break;
-                    }
-                }
+//                while(1)
+//                {
+//                    QCoreApplication::processEvents();
+//                    breakCount++;
+//                    GDataFactory::get_camera_interface()->StartGrabbing();
+//                    GDataFactory::get_camera_interface()->SoftwareTriggerOnce();
+//                    QThread::msleep(300);
+//                    image = GDataFactory::get_camera_interface()->GetImage();
+//                    if(!image.empty() && image.data)
+//                    {
+//                        GDataFactory::get_camera_interface()->StopGrabbing();
+//                        break;
+//                    }
+//                    if(breakCount == 10)
+//                    {
+//                        GDataFactory::get_camera_interface()->StopGrabbing();
+//                        QLOG_WARN()<<"take picture failed,please restart";
+//                        break;
+//                    }
+//                    GDataFactory::get_camera_interface()->StopGrabbing();
+//                }
+
+                GDataFactory::get_camera_interface()->StartGrabbing();
+                GDataFactory::get_camera_interface()->SoftwareTriggerOnce();
+//                QThread::msleep(300);
+                QEventLoop loop;
+                QTimer::singleShot(300, &loop, SLOT(quit()));
+                loop.exec();
+                image = GDataFactory::get_camera_interface()->GetImage();
+                GDataFactory::get_camera_interface()->StopGrabbing();
 
                 if (!image.empty() && image.data)
                 {
