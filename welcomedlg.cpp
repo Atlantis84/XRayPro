@@ -3,6 +3,12 @@
 #include "gdatafactory.h"
 #include <QtMath>
 #include <QVBoxLayout>
+#include <QGroupBox>
+#include "title/TitleBar.h"
+#include <QPushButton>
+#include <QRegExp>
+#include <QValidator>
+
 WelcomeDlg::WelcomeDlg()
 {
     setWindowFlags(Qt::FramelessWindowHint | windowFlags());
@@ -19,11 +25,57 @@ WelcomeDlg::WelcomeDlg()
     vAll->setStretch(1,1);
     this->setLayout(vAll);
 
+//    setWindowFlags(Qt::FramelessWindowHint | windowFlags());
+//    setWindowIcon(QIcon(":/icon/24x24.png"));
+//    this->resize(300,200);
+
+//    TitleBar *pTitleBar = new TitleBar(this);
+//    pTitleBar->setTitle(u8"XRay点料机");
+//    pTitleBar->setFixedWidth(300);
+//    installEventFilter(pTitleBar);
+
+//    m_pLineAccount = new QLineEdit();
+//    m_pLineAccount->setAlignment(Qt::AlignCenter);
+//    m_pLineAccount->setText(u8"");
+//    QRegExp regx("[A-Z0-9]+$");
+//    QValidator *validator = new QRegExpValidator(regx,m_pLineAccount);
+//    m_pLineAccount->setValidator(validator);
+
+//    QGroupBox* grpBox = new QGroupBox(u8"请输入员工编号");
+//    grpBox->setStyleSheet("QGroupBox{border:1px solid rgba(0,0,0,100);color:rgb(0,0,0);background-color:rgba(0,0,0,0);}");
+//    QHBoxLayout* hBox = new QHBoxLayout();
+//    hBox->addWidget(m_pLineAccount);
+//    grpBox->setLayout(hBox);
+
+//    QHBoxLayout* hBox1 = new QHBoxLayout();
+//    QPushButton* btnOk = new QPushButton(u8"  确 定  ");
+//    connect(btnOk,SIGNAL(clicked()),this,SLOT(slot_ok()));
+//    QPushButton* btnCancel = new QPushButton(u8"  取 消  ");
+//    connect(btnCancel,SIGNAL(clicked()),this,SLOT(slot_cancel()));
+//    hBox1->addWidget(btnOk);
+//    hBox1->addWidget(btnCancel);
+
+//    QVBoxLayout* vAll = new QVBoxLayout();
+//    vAll->addSpacing(pTitleBar->height());
+//    vAll->addWidget(grpBox);
+//    vAll->addLayout(hBox1);
+//    this->setLayout(vAll);
+
 }
 
 void WelcomeDlg::showEvent(QShowEvent *event)
 {
     Q_UNUSED(event);
+}
+
+void WelcomeDlg::slot_ok()
+{
+    this->accept();
+}
+
+void WelcomeDlg::slot_cancel()
+{
+    this->reject();
 }
 
 void WelcomeDlg::set_text(int eqID, QString info)
@@ -32,26 +84,13 @@ void WelcomeDlg::set_text(int eqID, QString info)
 
 void WelcomeDlg::timerEvent(QTimerEvent *event)
 {
-    this->repaint();
 }
 
 void WelcomeDlg::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
-//    QPainter painter(this);
+    QPainter painter(this);
 //    painter.setRenderHint(QPainter::Antialiasing,true);
-//    painter.save();
-//    QPoint ptCenter(400,200);
-//    painter.translate(ptCenter.x(),ptCenter.y());
-//    painter.rotate(rotateValue);
-//    int R = 160;
-//    for(int i=0;i<18;i++)
-//    {
-//        double angle = (double)(i*20)*M_PI/180.0;
-//        QPainterPath pathE;
-//        pathE.addEllipse(0-R*qCos(angle)-25,R*qSin(angle)-25,50,50);
-//        painter.fillPath(pathE,QBrush(QColor(0,0,255,255-i*10)));
-//    }
-//    painter.restore();
+//    painter.fillRect(this->rect(),QBrush(QColor(235,236,240)));
 }
 

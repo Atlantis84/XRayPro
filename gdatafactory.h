@@ -18,6 +18,7 @@
 #include "Detector.h"
 #include "elecmanualwgt.h"
 #include "datacommserial.h"
+#include "datacommserialEx.h"
 #include "udpservice.h"
 #include "paraconfigwgt.h"
 #include "welcomedlg.h"
@@ -124,6 +125,7 @@ private:
     QString m_pConfigFileName;
     QMap<QString,QString> ConfigInfo;
     DataCommSerial* pComm;
+    DataCommSerialEx* pCommCode;
     System_Status m_pSystemStatus;
 //    Current_Product_Style m_pProductStyle;
     QMutex m_mutex;
@@ -140,10 +142,23 @@ private:
     QString m_pCurrentSecondSectionCode;
     QString m_pCurrentFullSN;
     void get_step_and_threshold_run(float &step, float &threshold);
+    QStringList m_pListCodeFromScanner;
 
-
+    bool m_pUseCamera;
 
 public:
+    void set_use_camera_sign(bool b){m_pUseCamera = b;}
+    bool get_use_camera_sign(){return m_pUseCamera;}
+    QStringList get_code_list()
+    {
+        return m_pListCodeFromScanner;
+    }
+
+    void clear_code_list()
+    {
+        m_pListCodeFromScanner.clear();
+    }
+
     void submit_msg_to_mes(QString currentSN,QString productQuantity);
 
     void set_current_full_sn(QString strSN)
@@ -351,6 +366,9 @@ public:
     quint8 process_ip_string(const QString ipstr);
 
     void read_serial_number_xray(int functioncode);
+    void read_product_code_number();
+    void stop_read_product_code();
+    QStringList phase_bar_code(QByteArray ar);
     QString bytes_to_str(QByteArray data);
 
     QStringList find_files(const QString& startDir,QStringList filters,bool _isParent){
@@ -623,6 +641,7 @@ public slots:
     void slot_start_to_count();
     void slot_rev_serial_number(const QByteArray& data);
     void slot_normal_count_over(int amount,double counttime);
+    void slot_rev_product_code_number(const QByteArray& data);
 };
 
 #endif // GDATAFACTORY_H

@@ -53,8 +53,11 @@ ProductManageWgt::ProductManageWgt(QWidget *parent) : QWidget(parent)
     QPushButton* btnAdd = new QPushButton(u8" 添  加 ");
     connect(btnAdd,SIGNAL(clicked()),this,SLOT(slot_add()));
     QPushButton* btnImport = new QPushButton(u8" 表 格 导 入 ");
-    btnImport->setStyleSheet("min-height:50px;max-height:50px;");
+//    btnImport->setStyleSheet("min-height:50px;max-height:50px;");
     connect(btnImport,SIGNAL(clicked()),this,SLOT(slot_import()));
+    QPushButton* btnDelete = new QPushButton(u8" 删 除 数 据 ");
+//    btnDelete->setStyleSheet("min-height:50px;max-height:50px;");
+    connect(btnDelete,SIGNAL(clicked()),this,SLOT(slot_delete()));
     grpConfigData->setStyleSheet("QGroupBox{border:1px solid rgba(0,0,0,100);color:rgb(0,0,0);background-color:rgba(0,0,0,0);}");
     hBox1->addWidget(labelSecondSecCode);
     hBox1->addWidget(leSecondSecCode);
@@ -72,6 +75,7 @@ ProductManageWgt::ProductManageWgt(QWidget *parent) : QWidget(parent)
 
     QVBoxLayout* vBox4 = new QVBoxLayout();
     vBox4->addWidget(btnImport);
+    vBox4->addWidget(btnDelete);
 
     QHBoxLayout* hBoxAll = new QHBoxLayout();
     hBoxAll->addStretch();
@@ -83,6 +87,7 @@ ProductManageWgt::ProductManageWgt(QWidget *parent) : QWidget(parent)
 
     vAll->addSpacing(pTitleBar->height());
     vAll->addWidget(grpAllData);
+//    vAll->addWidget(createTableWidget());
     vAll->addWidget(grpConfigData);
     this->setLayout(vAll);
 
@@ -106,10 +111,10 @@ QWidget *ProductManageWgt::createTableWidget()
                                "QTableWidget::item::selected{color:rgb(0,0,0);"
                                "background-color:rgb(207,207,217);}");
     tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-//    tableWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 
     tableWidget->verticalHeader()->setStyleSheet("QHeaderView::section{border-color:rgb(0,0,0);color:rgb(0,0,0);background-color:rgba(216,217,222,255);}");
     tableWidget->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     return tableWidget;
 }
 
@@ -160,12 +165,17 @@ void ProductManageWgt::set_table_data()
     int itemCount = 0;
     while(itr != tmpProductInfo.end())
     {
-        tableWidget->setItem(itemCount,0,new QTableWidgetItem(itr.key()));
+        QTableWidgetItem* item1 = new QTableWidgetItem(itr.key());
+        QTableWidgetItem* item2 = new QTableWidgetItem(itr.value());
+        item1->setFlags(item1->flags() & (~Qt::ItemIsEditable));
+        item2->setFlags(item2->flags() & (~Qt::ItemIsEditable));
+
+        tableWidget->setItem(itemCount,0,item1);
         tableWidget->item(itemCount,0)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-        tableWidget->item(itemCount,0)->setFlags(Qt::ItemIsSelectable);
-        tableWidget->setItem(itemCount,1,new QTableWidgetItem(itr.value()));
+//        tableWidget->item(itemCount,0)->setFlags(Qt::ItemIsSelectable);
+        tableWidget->setItem(itemCount,1,item2);
         tableWidget->item(itemCount,1)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-        tableWidget->item(itemCount,1)->setFlags(Qt::ItemIsSelectable);
+//        tableWidget->item(itemCount,1)->setFlags(Qt::ItemIsSelectable);
         itr++;
         itemCount++;
     }
@@ -270,6 +280,48 @@ void ProductManageWgt::slot_add()
     }
 
     set_table_data();
+}
+
+void ProductManageWgt::slot_delete()
+{
+//    QList<QTableWidgetItem*> items = this->tableWidget->selectedItems();
+
+//    if(items.size() == 0)
+//    {
+//        IMessageBox* msgBox = new IMessageBox(3);
+//        msgBox->warning(u8"请选中要删除的行!");
+//        return;
+//    }
+
+    QString strCode,strStyle;
+//    for(int i=0;i<items.count();i++)
+//    {
+//        QTableWidgetItem* item = items.at(i);
+//        if(i==0)
+//            strCode = item->text();
+//        else if(i==1)
+//            strStyle = item->text();
+//        else
+//        {
+//            return;
+//        }
+//    }
+    strCode = leSecondSecCode->text();
+    strStyle = leProductStyle->text();
+
+    QString strSql = QString("delete from %1 where \"Second_Section_Code\" = '%2' and \"Product_Style_Code\" = '%3'").
+            arg(constProductStyleMapTable).
+            arg(strCode).
+            arg(strStyle);
+    QString strErrorMsg;
+    if(GDataFactory::get_pgsql()->ExecSql(strSql,strErrorMsg))
+    {
+        QLOG_INFO()<<"delete from user table SUCCESS!";
+        set_table_data();
+    }
+    else{
+        QLOG_WARN()<<"delete from user table FAILED!";
+    }
 }
 
 QString ProductManageWgt::open_excel_file()

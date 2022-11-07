@@ -39,9 +39,15 @@ TemplateConfigWgt::TemplateConfigWgt(QWidget *parent) : QWidget(parent)
     QLabel* labelSenderCurrent = new QLabel(u8"发射源电流:");
     labelSenderCurrent->setStyleSheet("background-color:rgba(0,0,0,0);");
     cmb_sender_current = new QComboBox();
-    for(int i=0;i<GDataFactory::get_factory()->get_current_list().length();i++)
-        cmb_sender_current->insertItem(i,GDataFactory::get_factory()->get_current_list()[i]);
-    cmb_sender_current->setCurrentIndex(0);
+
+//    for(int i=0;i<GDataFactory::get_factory()->get_current_list().length();i++)
+//        cmb_sender_current->insertItem(i,GDataFactory::get_factory()->get_current_list()[i]);
+    for(int i=4;i<8;i++)
+    {
+        int tmpc = i*1000;
+        cmb_sender_current->insertItem(i-4,QString("%1").arg(tmpc));
+    }
+    cmb_sender_current->setCurrentIndex(2);
     cmb_sender_current->setStyleSheet("QComboBox{border:1px solid rgba(0,0,0,100);font-family:Microsoft YaHei;font-size:20px;"
                                            "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:100px;}"
                                            "QComboBox:hover{border:2px solid rgba(0,0,0,100);}");
@@ -52,9 +58,14 @@ TemplateConfigWgt::TemplateConfigWgt(QWidget *parent) : QWidget(parent)
     QLabel* labelSenderVoltage = new QLabel(u8"发射源电压:");
     labelSenderVoltage->setStyleSheet("background-color:rgba(0,0,0,0);");
     cmb_sender_voltage = new QComboBox();
-    for(int i=0;i<GDataFactory::get_factory()->get_voltage_list().length();i++)
-        cmb_sender_voltage->insertItem(i,GDataFactory::get_factory()->get_voltage_list()[i]);
-    cmb_sender_voltage->setCurrentIndex(0);
+//    for(int i=0;i<GDataFactory::get_factory()->get_voltage_list().length();i++)
+//        cmb_sender_voltage->insertItem(i,GDataFactory::get_factory()->get_voltage_list()[i]);
+    for(int i=3;i<7;i++)
+    {
+        int tmpv = i*100;
+        cmb_sender_voltage->insertItem(i-3,QString("%1").arg(tmpv));
+    }
+    cmb_sender_voltage->setCurrentIndex(1);
     cmb_sender_voltage->setStyleSheet("QComboBox{border:1px solid rgba(0,0,0,100);font-family:Microsoft YaHei;font-size:20px;"
                                       "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:100px;}"
                                       "QComboBox:hover{border:2px solid rgba(0,0,0,100);}");
@@ -102,7 +113,7 @@ TemplateConfigWgt::TemplateConfigWgt(QWidget *parent) : QWidget(parent)
         aValue += 0.1;
         cmb_vision_step->insertItem(i,QString("%1").arg(aValue));
     }
-    cmb_vision_step->setCurrentIndex(0);
+    cmb_vision_step->setCurrentIndex(4);
 
     QLabel* labelThreshold = new QLabel(u8"点料门限:");
     labelThreshold->setStyleSheet("background-color:rgba(0,0,0,0);");
@@ -111,12 +122,12 @@ TemplateConfigWgt::TemplateConfigWgt(QWidget *parent) : QWidget(parent)
                                       "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);}"
                                       "QComboBox:hover{border:2px solid rgba(0,0,0,100);}");
     aValue = 0.49;
-    for(int i=0;i<40;i++)
+    for(int i=0;i<500;i++)
     {
-        aValue += 0.01;
-        cmb_vision_threshold->insertItem(i,QString("%1").arg(aValue));
+        aValue += 0.001;
+        cmb_vision_threshold->insertItem(i,QString::number(aValue,'f',3));
     }
-    cmb_vision_threshold->setCurrentIndex(0);
+    cmb_vision_threshold->setCurrentIndex(210);
     hBox_11->addWidget(labelStep);
     hBox_11->addWidget(cmb_vision_step);
     hBox_11->addWidget(labelThreshold);
@@ -270,19 +281,16 @@ static float m_pVisionThreshold;
 void TemplateConfigWgt::slot_count_test()
 {
     update_power_para();
-
     configProductStyle = this->cmb_product_style->currentText();
     this->le_product_amount->setText("");
     QString tmpProductStyle = this->cmb_product_style->currentText();
-    tmpProductStyle.prepend("f:/template/");
+    tmpProductStyle.prepend("e:/template/");
     tmpProductStyle.append(".png");
     tempMat = cv::imread(tmpProductStyle.toStdString());
-
     QString tmp = this->cmb_product_style->currentText();
-    tmp.prepend("f:/Initial/");
+    tmp.prepend("e:/Initial/");
     tmp.append(".jpg");
     currentFullImage = cv::imread(tmp.toStdString());
-
     if(currentFullImage.data && tempMat.data)
     {
         get_step_and_threshold(m_pVisionStep,m_pVisionThreshold);
@@ -368,8 +376,11 @@ void CountThread::run()
                 configProductStyle == "1206")
         {
             GDataFactory::get_factory()->pre1(currentFullImage);
+            QLOG_INFO()<<"step1";
             GDataFactory::get_factory()->pre2(currentFullImage);
+            QLOG_INFO()<<"step2";
             GDataFactory::get_factory()->pre3(currentFullImage);
+            QLOG_INFO()<<"step3";
         }
         else
         {

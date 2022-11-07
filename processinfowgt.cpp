@@ -64,10 +64,10 @@ ProcessInfoWgt::ProcessInfoWgt(QWidget *parent) : QWidget(parent)
     lThreshold->setStyleSheet("background-color:rgba(0,0,0,0);");
     m_pCmbThreshold = new QComboBox();
     float aValue = 0.49;
-    for(int i=0;i<40;i++)
+    for(int i=0;i<500;i++)
     {
-        aValue += 0.01;
-        m_pCmbThreshold->insertItem(i,QString("%1").arg(aValue));
+        aValue += 0.001;
+        m_pCmbThreshold->insertItem(i,QString::number(aValue,'f',3));
     }
     m_pCmbThreshold->setCurrentIndex(-1);
     m_pCmbThreshold->setStyleSheet("QComboBox{border:1px solid rgba(0,0,0,100);font-family:Microsoft YaHei;font-size:20px;"
@@ -133,6 +133,10 @@ void ProcessInfoWgt::slot_rev_count_result(int countR, double aTime)
 void ProcessInfoWgt::slot_rev_bar_code(QString pStyle)
 {
     m_pProductStyle->setText(pStyle);
+
+    m_pProductAmount->setText("");
+    m_pCountTime->setText("");
+    m_pCountStep->setText("");
 }
 
 void ProcessInfoWgt::slot_rev_count_step(QString step)

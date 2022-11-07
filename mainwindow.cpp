@@ -262,98 +262,24 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
             if((data[1] & 0xFF) == 0x01)//notify camera to take picture and scan code
             {
                 GDataFactory::get_time_step_counter()->start();
-                //add vision code here
-                bool foundSign = false;
-                cv::Mat image;
-                int breakCount = 0;
-//                while(1)
-//                {
-//                    QCoreApplication::processEvents();
-//                    breakCount++;
-//                    GDataFactory::get_camera_interface()->StartGrabbing();
-//                    GDataFactory::get_camera_interface()->SoftwareTriggerOnce();
-//                    QThread::msleep(300);
-//                    image = GDataFactory::get_camera_interface()->GetImage();
-//                    if(!image.empty() && image.data)
-//                    {
-//                        GDataFactory::get_camera_interface()->StopGrabbing();
-//                        break;
-//                    }
-//                    if(breakCount == 10)
-//                    {
-//                        GDataFactory::get_camera_interface()->StopGrabbing();
-//                        QLOG_WARN()<<"take picture failed,please restart";
-//                        break;
-//                    }
-//                    GDataFactory::get_camera_interface()->StopGrabbing();
-//                }
-
-                GDataFactory::get_camera_interface()->StartGrabbing();
-                GDataFactory::get_camera_interface()->SoftwareTriggerOnce();
-//                QThread::msleep(300);
-                QEventLoop loop;
-                QTimer::singleShot(300, &loop, SLOT(quit()));
-                loop.exec();
-                image = GDataFactory::get_camera_interface()->GetImage();
-                GDataFactory::get_camera_interface()->StopGrabbing();
-
-                if (!image.empty() && image.data)
+                if(GDataFactory::get_factory()->get_use_camera_sign() == false)//use scanner
                 {
-                    Mat src2;
-                    Mat kernel = (Mat_<float>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
-                    filter2D(image, src2,CV_8UC3, kernel);
-
-                    GDataFactory::get_factory()->scan_camera_mat_to_pixmap(image);
-                    vector<string> ss;
-                    vector<RotatedRect> pp;
-                    image = src2;
-                    GDataFactory::get_bar_code_decoding()->decode_h(image,ss,pp);
-
-                    vector<vector<string>> allCodeSegs;
-                    for(int i=0;i<ss.size();i++)
+                    if(GDataFactory::get_factory()->get_code_list().length() != 4)
+                        m_pTimerID = startTimer(1000);
+                    else
                     {
-//                        QLOG_WARN()<<QString("%1").fromStdString(ss[i]);
-                        allCodeSegs.push_back(split_string(ss[i],"-"));
-                    }
-
-                    vector<string> currentPCode;
-                    for(int i=0;i<allCodeSegs.size();i++)
-                    {
-                        if(allCodeSegs[i].size() != 4)
-                            continue;
-                        else
-                        {
-                            currentPCode = allCodeSegs[i];
-                            foundSign = true;
-                        }
-                    }
-
-                    if(foundSign)
-                    {
-                        QString strStyle = GDataFactory::get_factory()->get_product_style(QString::fromStdString(currentPCode[1]));
+                        QString strStyle = GDataFactory::get_factory()->get_product_style(GDataFactory::get_factory()->get_code_list()[1]);
+                        GDataFactory::get_factory()->set_current_bar_code(GDataFactory::get_factory()->get_code_list()[1].append("-").append(strStyle));
                         QString tmpFullSN = "";
                         for(int i=0;i<4;i++)
                         {
-                            tmpFullSN.append(QString::fromStdString(currentPCode[i]));
+                            tmpFullSN.append(GDataFactory::get_factory()->get_code_list()[i]);
                             if(i<3)
                                 tmpFullSN.append("-");
                         }
                         GDataFactory::get_factory()->set_current_full_sn(tmpFullSN);
-                        //check template file exist or not
-                        QString checkStyleExist = strStyle;
-                        checkStyleExist.append(".png");
-                        checkStyleExist.prepend("f:/Initial/");
-                        if(QFile::exists(checkStyleExist))
-                        {
-                            IMessageBox* msgBox = new IMessageBox(3);
-                            msgBox->warning("template not exist!");
-                            slot_start_run();
-                            return;
-                        }
-                        //check template file exist or not
 
-                        GDataFactory::get_factory()->set_current_second_section_code(QString::fromStdString(currentPCode[1]));
-                        GDataFactory::get_factory()->set_current_bar_code(QString::fromStdString(currentPCode[1]).append("-").append(strStyle));
+                        GDataFactory::get_factory()->set_current_second_section_code(GDataFactory::get_factory()->get_code_list()[1]);
                         GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W201,ADDRESS_W201_00,tmpData.length(),tmpData);
                         //1¡¢get product style by sn
                         //2¡¢get sender's power by product style
@@ -366,21 +292,93 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
 //                        QThread::msleep(500);
                         //when scan code SUCCESS,notify PLC take picture over
                         m_pTimerID = startTimer(1000);
+                        GDataFactory::get_factory()->clear_code_list();
+                    }
+                }
+                else//use camera
+                {
+                    GDataFactory::get_time_step_counter()->start();
+                    //add vision code here
+                    bool foundSign = false;
+                    cv::Mat image;
+                    GDataFactory::get_camera_interface()->StartGrabbing();
+                    GDataFactory::get_camera_interface()->SoftwareTriggerOnce();
+                    QEventLoop loop;
+                    QTimer::singleShot(300, &loop, SLOT(quit()));
+                    loop.exec();
+                    image = GDataFactory::get_camera_interface()->GetImage();
+                    GDataFactory::get_camera_interface()->StopGrabbing();
+
+                    if (!image.empty() && image.data)
+                    {
+                        Mat src2;
+                        Mat kernel = (Mat_<float>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
+                        filter2D(image, src2,CV_8UC3, kernel);
+
+                        GDataFactory::get_factory()->scan_camera_mat_to_pixmap(image);
+                        vector<string> ss;
+                        vector<RotatedRect> pp;
+                        image = src2;
+                        GDataFactory::get_bar_code_decoding()->decode_h(image,ss,pp);
+
+                        vector<vector<string>> allCodeSegs;
+                        for(int i=0;i<ss.size();i++)
+                        {
+    //                        QLOG_WARN()<<QString("%1").fromStdString(ss[i]);
+                            allCodeSegs.push_back(split_string(ss[i],"-"));
+                        }
+
+                        vector<string> currentPCode;
+                        for(int i=0;i<allCodeSegs.size();i++)
+                        {
+                            if(allCodeSegs[i].size() != 4)
+                                continue;
+                            else
+                            {
+                                currentPCode = allCodeSegs[i];
+                                foundSign = true;
+                            }
+                        }
+
+                        if(foundSign)
+                        {
+                            QString strStyle = GDataFactory::get_factory()->get_product_style(QString::fromStdString(currentPCode[1]));
+                            GDataFactory::get_factory()->set_current_bar_code(QString::fromStdString(currentPCode[1]).append("-").append(strStyle));
+                            QString tmpFullSN = "";
+                            for(int i=0;i<4;i++)
+                            {
+                                tmpFullSN.append(QString::fromStdString(currentPCode[i]));
+                                if(i<3)
+                                    tmpFullSN.append("-");
+                            }
+                            GDataFactory::get_factory()->set_current_full_sn(tmpFullSN);
+
+                            GDataFactory::get_factory()->set_current_second_section_code(QString::fromStdString(currentPCode[1]));
+                            GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W201,ADDRESS_W201_00,tmpData.length(),tmpData);
+                            //1¡¢get product style by sn
+                            //2¡¢get sender's power by product style
+                            //3¡¢set the sender's power
+
+                            GDataFactory::get_factory()->set_sender_power(strStyle);
+                            GDataFactory::get_factory()->read_serial_number_xray(5);//set sender's vp
+                            QThread::msleep(200);
+                            GDataFactory::get_factory()->read_serial_number_xray(6);//set sender's cp
+    //                        QThread::msleep(500);
+                            //when scan code SUCCESS,notify PLC take picture over
+                            m_pTimerID = startTimer(1000);
+                        }
+                        else
+                        {
+                            QLOG_ERROR()<<u8"¶ÁÂëÊ§°Ü£¡¼ÌÐø¶ÁÂë»òÇë¸ü»»ÁÏÅÌ!";
+                            m_pTimerID = startTimer(1000);
+                        }
                     }
                     else
                     {
-                        QLOG_ERROR()<<u8"¶ÁÂëÊ§°Ü£¡¼ÌÐø¶ÁÂë»òÇë¸ü»»ÁÏÅÌ!";
-//                        GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W201,ADDRESS_W201_01,tmpData.length(),tmpData);
-                        m_pTimerID = startTimer(1000);
-//                        IMessageBox* msgBox = new IMessageBox(3);
-//                        msgBox->warning(u8"¶ÁÂëÊ§°Ü!");
+                        QLOG_WARN()<<"camera take picture failed! take picture again";
                     }
                 }
-                else
-                {
-                    QLOG_WARN()<<"camera take picture failed! take picture again";
-//                    m_pTimerID = startTimer(1000);
-                }
+
             }
             else
             {

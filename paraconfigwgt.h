@@ -19,6 +19,7 @@ signals:
 public slots:
     void slot_SetParaValue();
     void slot_CloseWgt();
+    void slot_state_changed(int s);
 private:
     QLineEdit* lineEditPLCAddr;
     QLineEdit* lineEditPLCPort;

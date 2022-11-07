@@ -61,6 +61,7 @@ signals:
 public slots:
     void slot_query();
     void slot_add();
+    void slot_delete();
     void slot_import();
     void slot_import_over();
 };

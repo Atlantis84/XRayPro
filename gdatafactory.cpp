@@ -61,7 +61,7 @@ QImage GDataFactory::mat_to_qimage(const Mat &cvImage)
         image.save(imageName);
     }
     else {
-        QString current_path ="f:/Initial/";
+        QString current_path ="e:/Initial/";
         current_path.append(GDataFactory::get_current_product_style());
         QString imageName = current_path +".jpg";
         image.save(imageName);
@@ -133,9 +133,9 @@ void GDataFactory::count_product()
 
     normalProductStyle = m_pCurrentProductStyle;
     QString tmpProductStyle = m_pCurrentProductStyle;
-    tmpProductStyle.prepend("f:/template/");
+    tmpProductStyle.prepend("e:/template/");
     tmpProductStyle.append(".png");
-
+    QLOG_WARN()<<u8"当前模板为:"<<tmpProductStyle;
     QFile file(tmpProductStyle);
     if(file.exists())
         ;
@@ -174,14 +174,18 @@ void NormalCountThread::run()
                 normalProductStyle == "1206")
         {
             GDataFactory::get_factory()->pre1(currentFullImage);
+            QLOG_WARN()<<"the small product pre1";
             GDataFactory::get_factory()->pre2(currentFullImage);
+            QLOG_WARN()<<"the small product pre2";
             GDataFactory::get_factory()->pre3(currentFullImage);
+            QLOG_WARN()<<"the small product pre3";
         }
         else
         {
-
             GDataFactory::get_factory()->pre1(currentFullImage);
+            QLOG_WARN()<<"the big product pre1";
             GDataFactory::get_factory()->pre_big(currentFullImage);
+            QLOG_WARN()<<"the big product pre_big";
         }
 
         t.setImage(currentFullImage);
@@ -243,12 +247,13 @@ void GDataFactory::submit_msg_to_mes(QString currentSN, QString productQuantity)
 
     QJsonObject reqJson;
     reqJson.insert("TYPE","X");
-    reqJson.insert("WORKSTATION",u8"一车间点料机");
-    reqJson.insert("EMP","20121109");
+    reqJson.insert("WORKSTATION",u8"TLQ");
+    reqJson.insert("EMP","");
     reqJson.insert("SN",currentSN);
     reqJson.insert("QTY",productQuantity);
     QJsonDocument doc_data(reqJson);
     QByteArray request_data = doc_data.toJson(QJsonDocument::Compact);
+    QLOG_WARN()<<u8"上传Mes信息为:"<<request_data;
 
 //    QNetworkAccessManager *accessManager = new QNetworkAccessManager(this);
     QString rInfo = "info=";
@@ -318,8 +323,10 @@ QMap<QString,QString> GDataFactory::get_product_info()
 GDataFactory::GDataFactory()
 {
     pComm = nullptr;
+    pCommCode = nullptr;
     m_pCurrentVoltage = "400";
     m_pCurrentCurrent = "6000";
+    m_pUseCamera = true;
     m_pNormalCountThread = new NormalCountThread();
     connect(m_pNormalCountThread,SIGNAL(signal_normal_count_over(int,double)),this,SLOT(slot_normal_count_over(int,double)));
     connect(this,SIGNAL(signal_start_to_count()),this,SLOT(slot_start_to_count()));
@@ -331,6 +338,7 @@ void GDataFactory::connections_initialization()
     get_udp_service();
     get_elec_manual_wgt();
     get_welcome_dlg();
+    get_template_config_wgt();
     //init class obj
     connect(this,SIGNAL(signal_notify_time_step(QString)),get_process_info_wgt(),SLOT(slot_rev_count_step(QString)));
     connect(this,SIGNAL(signal_notify_bar_code(QString)),get_process_info_wgt(),SLOT(slot_rev_bar_code(QString)));
@@ -467,6 +475,7 @@ void GDataFactory::load_json_config(char *filename)
                     QJsonObject icon = iconArray.toObject();
                     ConfigInfo.insert("MES_IP",icon["MES_IP"].toString());
                     ConfigInfo.insert("COM_PORT",icon["COM_PORT"].toString());
+                    ConfigInfo.insert("COM_PORT_SCANNER",icon["COM_PORT_SCANNER"].toString());
                     ConfigInfo.insert("PLC_IP",icon["PLC_IP"].toString());
                 }
             }
@@ -482,6 +491,8 @@ void GDataFactory::load_json_config(char *filename)
                     ConfigInfo.insert("MES_PORT",obj.value("MES_PORT").toString());
                 if(obj.contains("COM_BARD_RATE"))
                     ConfigInfo.insert("COM_BARD_RATE",obj.value("COM_BARD_RATE").toString());
+                if(obj.contains("COM_BARD_RATE_SCANNER"))
+                    ConfigInfo.insert("COM_BARD_RATE_SCANNER",obj.value("COM_BARD_RATE_SCANNER").toString());
                 if(obj.contains("PLC_PORT"))
                     ConfigInfo.insert("PLC_PORT",obj.value("PLC_PORT").toString());
             }
@@ -499,6 +510,8 @@ void GDataFactory::load_json_config(char *filename)
                     ConfigInfo.insert("LOG_LEVEL",obj.value("LOG_LEVEL").toString());
                 if(obj.contains("IMAGE_STRETCH_FILL"))
                     ConfigInfo.insert("IMAGE_STRETCH_FILL",obj.value("IMAGE_STRETCH_FILL").toString());
+                if(obj.contains("USE_CAMERA"))
+                    ConfigInfo.insert("USE_CAMERA",obj.value("USE_CAMERA").toString());
             }
         }
     }
@@ -824,6 +837,78 @@ void GDataFactory::read_serial_number_xray(int functioncode)
         pComm->moveToThread(&qThread);
         pComm->run();
     }
+}
+
+void GDataFactory::read_product_code_number()
+{
+    if(pCommCode)
+    {
+        delete pCommCode;
+        pCommCode = nullptr;
+    }
+
+    pCommCode = new DataCommSerialEx();
+    connect(pCommCode,SIGNAL(sigRecvResponse(const QByteArray&)),this,SLOT(slot_rev_product_code_number(const QByteArray&)));
+    if(pCommCode)
+    {
+        QString portName = ConfigInfo["COM_PORT_SCANNER"];
+        QString portRate = ConfigInfo["COM_BARD_RATE_SCANNER"];
+        pCommCode->init(tagSerialPortInfoEx(portName,portRate.toInt()));
+        pCommCode->recvResponse_only();
+        pCommCode->start();
+    }
+}
+
+void GDataFactory::slot_rev_product_code_number(const QByteArray& data)
+{
+    QByteArray tmpArray;
+    if(data.length()>=20)
+    {
+        if(data[0] == 0x02)
+        {
+            for(int i=1;i<data.length();i++)
+            {
+                if((data[i] == 0x0d) || (data[i] == 0x0a))
+                    break;
+                else {
+                    tmpArray.append(data[i]);
+                }
+            }
+        }
+    }
+    if(tmpArray.length() > 20)
+        phase_bar_code(tmpArray);
+}
+
+QStringList GDataFactory::phase_bar_code(QByteArray ar)
+{
+    m_pListCodeFromScanner.clear();
+    QString strBarFullCode = ar;
+    int count = 0;
+    for(int i=0;i<strBarFullCode.length();i++)
+    {
+        if(strBarFullCode[i] == '-')
+            count++;
+        else
+            continue;
+    }
+
+    if(count == 3)
+        m_pListCodeFromScanner = strBarFullCode.split("-");
+    for(int i=0;i<m_pListCodeFromScanner.length();i++)
+        qDebug()<<m_pListCodeFromScanner[i];
+    return m_pListCodeFromScanner;
+}
+
+void GDataFactory::stop_read_product_code()
+{
+    disconnect(pCommCode,SIGNAL(sigRecvResponse(const QByteArray&)),this,SLOT(slot_rev_product_code_number(const QByteArray&)));
+    pCommCode->terminate();
+    pCommCode->quit();
+    pCommCode->closeSerialPort();
+    if(pCommCode)
+        delete pCommCode;
+    pCommCode = nullptr;
 }
 
 QString GDataFactory::bytes_to_str(QByteArray data)

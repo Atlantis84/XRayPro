@@ -92,17 +92,26 @@ ParaConfigWgt::ParaConfigWgt(QWidget *parent) : QWidget(parent)
     QGroupBox* grpPLC = new QGroupBox(u8"PLC配置");
     grpPLC->setStyleSheet("QGroupBox{border:1px solid rgba(0,0,0,100);color:rgb(0,0,0);background-color:rgba(0,0,0,0);}");
     grpPLC->setLayout(hBox1);
-//    QGroupBox* grpVisual = new QGroupBox(u8"发射源功率配置");
-//    grpVisual->setStyleSheet("QGroupBox{border:1px solid rgba(0,0,0,100);color:rgb(0,0,0);background-color:rgba(0,0,0,0);}");
-//    grpVisual->setLayout(hBox2);
     QGroupBox* grpCC = new QGroupBox(u8"发射源通信配置");
     grpCC->setStyleSheet("QGroupBox{border:1px solid rgba(0,0,0,100);color:rgb(0,0,0);background-color:rgba(0,0,0,0);}");
     grpCC->setLayout(hBox3);
 
+    QHBoxLayout* hBox5 = new QHBoxLayout();
+    QCheckBox* chBox = new QCheckBox(u8"启用相机扫码");
+    chBox->setStyleSheet("color:rgb(0,0,0);");
+    chBox->setChecked(true);
+    connect(chBox,SIGNAL(stateChanged(int)),this,SLOT(slot_state_changed(int)));
+    hBox5->addStretch();
+    hBox5->addWidget(chBox);
+    hBox5->addStretch();
+    QGroupBox* grpVisual = new QGroupBox(u8"扫码设置");
+    grpVisual->setStyleSheet("QGroupBox{border:1px solid rgba(0,0,0,100);color:rgb(0,0,0);background-color:rgba(0,0,0,0);}");
+    grpVisual->setLayout(hBox5);
+
     vAll->addSpacing(pTitleBar->height());
     vAll->addWidget(grpPLC);
     vAll->addWidget(grpCC);
-//    vAll->addWidget(grpVisual);
+    vAll->addWidget(grpVisual);
     vAll->addLayout(hBox4);
     this->setLayout(vAll);
 }
@@ -150,4 +159,13 @@ void ParaConfigWgt::slot_SetParaValue()
 void ParaConfigWgt::slot_CloseWgt()
 {
     this->close();
+}
+
+void ParaConfigWgt::slot_state_changed(int s)
+{
+    if(s == 0)
+        GDataFactory::get_factory()->set_use_camera_sign(false);
+    else {
+        GDataFactory::get_factory()->set_use_camera_sign(true);
+    }
 }

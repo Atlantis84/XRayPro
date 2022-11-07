@@ -149,7 +149,7 @@ void ZoomMoveObj::mouseReleaseEvent(QMouseEvent *event)
         QPixmap tmpP = pm.copy(rf);
         QString tmpProductStyle = m_product_style;
         tmpProductStyle = tmpProductStyle.append(".png");
-        tmpProductStyle.prepend("f:/template/");
+        tmpProductStyle.prepend("e:/template/");
         tmpP.save(tmpProductStyle);
 //        tmpP.save("f:/abc.png");
         GDataFactory::get_factory()->set_current_template_image_mat(image_to_mat(pm.copy(rf)));

@@ -21,18 +21,30 @@ int main(int argc, char *argv[])
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     QString qssFile = ":/icon/darkgray.qss";
     QFile file(qssFile);
-    qDebug()<<QSqlDatabase::drivers();
+    if (file.open(QFile::ReadOnly)) {
+        QString qss = QLatin1String(file.readAll());
+        QString paletteColor = qss.mid(20, 7);
+        qApp->setPalette(QPalette(QColor(paletteColor)));
+        qApp->setStyleSheet(qss);
+        file.close();
+    }
 
     if(GDataFactory::get_pgsql()->ConnectDataBase())
         QLOG_INFO()<<"connect to db success!";
     else {
         QLOG_FATAL()<<"connect to db failed!";
-        QApplication::exit(1);
+        IMessageBox* msgBox = new IMessageBox(3);
+        msgBox->warning(u8"链接数据库失败,程序退出!");
+        return -1;
     }
 
-    Logger& logger = Logger::instance();
-//    logger.setLoggingLevel(QsLogging::TraceLevel);
 
+//    if(GDataFactory::get_welcome_dlg()->exec() == QDialog::Accepted)
+//        ;
+//    else
+//        QApplication::exit(1);
+
+    Logger& logger = Logger::instance();
     const QString sLogPath(QDir(QApplication::applicationDirPath()).filePath("log.txt"));
     DestinationPtr fileDestination(DestinationFactory::MakeFileDestination(sLogPath, EnableLogRotation, MaxSizeBytes(512*1024), MaxOldLogCount(5)));
     logger.addDestination(fileDestination);
@@ -44,26 +56,18 @@ int main(int argc, char *argv[])
     logger.addDestination(controlDestination);
     QLOG_INFO()<<u8"QsLog init SUCCESS";
 
-    int okValue = GDataFactory::get_camera_interface()->OpenCamera();
-    if(okValue == 0)
-        QLOG_INFO()<<"open camera success";
-    else {
-        QLOG_WARN()<<"open camera failed";
-        IMessageBox* msgBox = new IMessageBox(3);
-        msgBox->warning(u8"打开相机失败,程序退出!");
-        return -1;
-    }
+//    int okValue = GDataFactory::get_camera_interface()->OpenCamera();
+//    if(okValue == 0)
+//        QLOG_INFO()<<"open camera success";
+//    else {
+//        QLOG_WARN()<<"open camera failed";
+//        IMessageBox* msgBox = new IMessageBox(3);
+//        msgBox->warning(u8"打开相机失败,程序退出!");
+//        return -1;
+//    }
 
 //    GDataFactory::get_test_window()->show();
 //    return a.exec();
-
-    if (file.open(QFile::ReadOnly)) {
-        QString qss = QLatin1String(file.readAll());
-        QString paletteColor = qss.mid(20, 7);
-        qApp->setPalette(QPalette(QColor(paletteColor)));
-        qApp->setStyleSheet(qss);
-        file.close();
-    }
 
     QString binDir=QApplication::applicationDirPath();
     GDataFactory::get_factory()->delete_files(binDir);
@@ -106,9 +110,10 @@ int main(int argc, char *argv[])
     GDataFactory::get_factory()->connections_initialization();
 
     GDataFactory::get_factory()->set_system_status(Init_Status);
-    GDataFactory::get_monitor_thread()->start();
-    GDataFactory::get_welcome_dlg()->exec();
+//    GDataFactory::get_monitor_thread()->start();
+//    GDataFactory::get_welcome_dlg()->exec();
 
+    GDataFactory::get_factory()->read_product_code_number();
     QDesktopWidget *desktop = QApplication::desktop();
     GDataFactory::get_top_wgt()->move((desktop->width()-GDataFactory::get_top_wgt()->width())/2,
                                       (desktop->height()-GDataFactory::get_top_wgt()->height())/2);

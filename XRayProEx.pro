@@ -33,6 +33,7 @@ SOURCES += \
         centralwgt.cpp \
         circlewidget.cpp \
         datacommserial.cpp \
+        datacommserialEx.cpp \
         dynamiccirclewgt.cpp \
         elecmanualwgt.cpp \
         equipinfowgt.cpp \
@@ -69,6 +70,7 @@ HEADERS += \
         centralwgt.h \
         circlewidget.h \
         datacommserial.h \
+        datacommserialEx.h \
         dynamiccirclewgt.h \
         elecmanualwgt.h \
         equipinfowgt.h \
