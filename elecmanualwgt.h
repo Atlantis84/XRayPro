@@ -63,6 +63,30 @@ private:
     QPushButton* btnCp;
     QPushButton* btnUnable;
 
+    QPushButton* btnScanCodeOver;
+    QPushButton* btnNG;
+    QPushButton* btnTakePicOver;
+
+    QPushButton* btnCountOver;
+    QPushButton* btnCountNG;
+    QPushButton* btnStatusError;
+
+    QPushButton* btnJawBack;
+    QPushButton* btnJawDown;
+    QPushButton* btnJawHBack;
+
+    QPushButton* btnJawHOut;
+    QPushButton* btnJawOff;
+    QPushButton* btnJawOn;
+
+    QPushButton* btnAcceptProductBack;
+    QPushButton* btnAcceptProductOut;
+    QPushButton* btnInProductOff;
+
+    QPushButton* btnInProductOn;
+    QPushButton* btnOutProductOff;
+    QPushButton* btnOutProductOn;
+
 
 signals:
     void signal_process_serial_info(int equipID,QString info);

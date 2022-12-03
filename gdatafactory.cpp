@@ -16,6 +16,7 @@
 #include <QNetworkReply>
 #include <QFileInfo>
 #include <QJsonParseError>
+#include "x-ray-pre.h"
 TopWidget* GDataFactory::m_pTopWgt = nullptr;
 MainWindow* GDataFactory::m_pMainWindow = nullptr;
 CentralWgt* GDataFactory::m_pCentralWgt = nullptr;
@@ -44,6 +45,7 @@ QTime* GDataFactory::m_pTimeStepCounter = nullptr;
 ProductManageWgt* GDataFactory::m_pProductManageWgt = nullptr;
 WaitCountWgt* GDataFactory::m_pWaitCountWgt = nullptr;
 QNetworkAccessManager* GDataFactory::m_pAccessManager = nullptr;
+AlgoQRCode* GDataFactory::m_pAlgoQRCode = nullptr;
 
 QImage GDataFactory::mat_to_qimage(const Mat &cvImage)
 {
@@ -143,9 +145,13 @@ void GDataFactory::count_product()
     {
         QByteArray tmpData;
         tmpData.append(static_cast<char>(0x01));
-        GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W201,ADDRESS_W201_01,tmpData.length(),tmpData);
+        GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W203,ADDRESS_W203_00,tmpData.length(),tmpData);
+        QThread::msleep(200);
+        GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W203,ADDRESS_W203_01,tmpData.length(),tmpData);
         IMessageBox* msgBox = new IMessageBox(3);
         msgBox->warning(u8"模板文件不存在，请制作模板文件");
+//        QLOG_ERROR()<<u8"模板文件不存在，请制作模板文件";
+        GDataFactory::get_main_window()->slot_start_run();
         return;
     }
 
@@ -168,26 +174,50 @@ void NormalCountThread::run()
         QTime timeS;
         timeS.start();
         TemplateBasedMethod t;
-        if(normalProductStyle == "0402" ||
-                normalProductStyle == "0603" ||
-                normalProductStyle == "0805" ||
-                normalProductStyle == "1206")
-        {
-            GDataFactory::get_factory()->pre1(currentFullImage);
-            QLOG_WARN()<<"the small product pre1";
-            GDataFactory::get_factory()->pre2(currentFullImage);
-            QLOG_WARN()<<"the small product pre2";
-            GDataFactory::get_factory()->pre3(currentFullImage);
-            QLOG_WARN()<<"the small product pre3";
-        }
-        else
-        {
-            GDataFactory::get_factory()->pre1(currentFullImage);
-            QLOG_WARN()<<"the big product pre1";
-            GDataFactory::get_factory()->pre_big(currentFullImage);
-            QLOG_WARN()<<"the big product pre_big";
-        }
-
+//        if(normalProductStyle == "0402" ||
+//                normalProductStyle == "0603" ||
+//                normalProductStyle == "0805" ||
+//                normalProductStyle == "1206" ||
+//                normalProductStyle == "C1001"||
+//                normalProductStyle == "C1002"||
+//                normalProductStyle == "C1003"||
+//                normalProductStyle == "C1004"||
+//                normalProductStyle == "C1005"||
+//                normalProductStyle == "C1006"||
+//                normalProductStyle == "C1007"||
+//                normalProductStyle == "C1008"||
+//                normalProductStyle == "C2001"||
+//                normalProductStyle == "C2002"||
+//                normalProductStyle == "C2003"||
+//                normalProductStyle == "C2004"||
+//                normalProductStyle == "C2005"||
+//                normalProductStyle == "C2006"||
+//                normalProductStyle == "C2007"||
+//                normalProductStyle == "C2008"||
+//                normalProductStyle == "C3001"||
+//                normalProductStyle == "C3002"||
+//                normalProductStyle == "C3003"||
+//                normalProductStyle == "C3004"||
+//                normalProductStyle == "C3005"||
+//                normalProductStyle == "C3006"||
+//                normalProductStyle == "C3007"||
+//                normalProductStyle == "C3008")
+//        {
+//            GDataFactory::get_factory()->pre1(currentFullImage);
+//            QLOG_WARN()<<"the small product pre1";
+//            GDataFactory::get_factory()->pre2(currentFullImage);
+//            QLOG_WARN()<<"the small product pre2";
+//            GDataFactory::get_factory()->pre3(currentFullImage);
+//            QLOG_WARN()<<"the small product pre3";
+//        }
+//        else
+//        {
+//            GDataFactory::get_factory()->pre1(currentFullImage);
+//            QLOG_WARN()<<"the big product pre1";
+//            GDataFactory::get_factory()->pre_big(currentFullImage);
+//            QLOG_WARN()<<"the big product pre_big";
+//        }
+        xray_pre(currentFullImage);
         t.setImage(currentFullImage);
         t.setTemplateImage(tempMat);
         t.setMaxMatch(20000);
@@ -862,6 +892,7 @@ void GDataFactory::read_product_code_number()
 void GDataFactory::slot_rev_product_code_number(const QByteArray& data)
 {
     QByteArray tmpArray;
+//    QLOG_WARN()<<data;
     if(data.length()>=20)
     {
         if(data[0] == 0x02)
@@ -893,10 +924,13 @@ QStringList GDataFactory::phase_bar_code(QByteArray ar)
             continue;
     }
 
-    if(count == 3)
+    if((count == 3)||
+            (count == 4)||
+            (count == 5)||
+            (count == 6))
         m_pListCodeFromScanner = strBarFullCode.split("-");
-    for(int i=0;i<m_pListCodeFromScanner.length();i++)
-        qDebug()<<m_pListCodeFromScanner[i];
+//    for(int i=0;i<m_pListCodeFromScanner.length();i++)
+//        qDebug()<<m_pListCodeFromScanner[i];
     return m_pListCodeFromScanner;
 }
 
@@ -926,6 +960,74 @@ QString GDataFactory::bytes_to_str(QByteArray data)
     return str_data;
 }
 
+HObject GDataFactory::mat_to_hobject(const cv::Mat &image)
+{
+    HObject Hobj = HObject();
+    int hgt = image.rows;
+    int wid = image.cols;
+    int i;
+    if (image.type() == CV_8UC3)
+    {
+        vector<Mat> imgchannel;
+        split(image, imgchannel);
+        Mat imgB = imgchannel[0];
+        Mat imgG = imgchannel[1];
+        Mat imgR = imgchannel[2];
+        uchar* dataR = new uchar[hgt*wid];
+        uchar* dataG = new uchar[hgt*wid];
+        uchar* dataB = new uchar[hgt*wid];
+        for (i = 0; i < hgt; i++)
+        {
+            memcpy(dataR + wid*i, imgR.data + imgR.step*i, wid);
+            memcpy(dataG + wid*i, imgG.data + imgG.step*i, wid);
+            memcpy(dataB + wid*i, imgB.data + imgB.step*i, wid);
+        }
+        GenImage3(&Hobj, "byte", wid, hgt, (Hlong)dataR, (Hlong)dataG, (Hlong)dataB);
+        delete[]dataR;
+        delete[]dataG;
+        delete[]dataB;
+        dataR = NULL;
+        dataG = NULL;
+        dataB = NULL;
+    }
+    else if (image.type() == CV_8UC1)
+    {
+        uchar* data = new uchar[hgt*wid];
+        for (i = 0; i < hgt; i++)
+            memcpy(data + wid*i, image.data + image.step*i, wid);
+        GenImage1(&Hobj, "byte", wid, hgt, (Hlong)data);
+        delete[] data;
+        data = NULL;
+    }
+    return Hobj;
+}
+
+vector<string> GDataFactory::halcon_QR_code(const HObject ho_Image)
+{
+    HObject  ho_SymbolXLDs;
+
+    // 定义扫码句柄和扫码结果句柄
+    HTuple  hv_DataCodeHandle, hv_ResultHandles;
+    //定义扫码结果
+    HTuple  hv_DecodedDataStrings;
+
+    CreateDataCode2dModel("QR Code", HTuple(), HTuple(), &hv_DataCodeHandle);
+    FindDataCode2d(ho_Image, &ho_SymbolXLDs, hv_DataCodeHandle, HTuple(), HTuple(),
+                   &hv_ResultHandles, &hv_DecodedDataStrings);
+    //创建输出条码值
+    vector<string> codeList;
+    for(int i=0;i<hv_DecodedDataStrings.Length();i++)
+    {
+        char* resultSN = new char[255];
+        sprintf_s(resultSN, 255, "%s", hv_DecodedDataStrings[0].S().Text());
+        string str = resultSN;
+        std::string::iterator end_pos = std::remove(str.begin(), str.end(), ' ');
+        str.erase(end_pos, str.end());//移除空格
+        codeList.push_back(str);
+    }
+    return codeList;
+}
+
 void GDataFactory::raw_to_mat(unsigned short *pBuffer, const int nWidth, const int nHeight)
 {
     cv::Mat out(cv::Size(nWidth, nHeight), CV_8UC1);
@@ -947,11 +1049,6 @@ void GDataFactory::raw_to_mat(unsigned short *pBuffer, const int nWidth, const i
     else {
         emit signal_spread_pixmap_to_ui(mat_to_pixmap(out));
     }
-}
-
-void GDataFactory::pre1(Mat & src,  Point center, int r)
-{
-    circle(src, center, r,Scalar(255,255,255),-1);
 }
 
 QString GDataFactory::get_product_style(QString strSN)

@@ -2,6 +2,7 @@
 #include <QVBoxLayout>
 #include "gdatafactory.h"
 #include "QsLog.h"
+#include "split.h"
 ProcessInfoWgt::ProcessInfoWgt(QWidget *parent) : QWidget(parent)
 {
     m_pLeftWgt = new LeftWidget();
@@ -45,13 +46,18 @@ ProcessInfoWgt::ProcessInfoWgt(QWidget *parent) : QWidget(parent)
     QHBoxLayout* hBoxThreshold = new QHBoxLayout();
     QLabel* lProductStyle = new QLabel(u8"产品类型:");
     lProductStyle->setStyleSheet("background-color:rgba(0,0,0,0);");
-    m_pCmbProductStyle = new QComboBox();
-    for(int i=0;i<GDataFactory::get_factory()->get_product_style_list().size();i++)
-        m_pCmbProductStyle->insertItem(i,GDataFactory::get_factory()->get_product_style_list()[i]);
-    m_pCmbProductStyle->setCurrentIndex(-1);
-    m_pCmbProductStyle->setStyleSheet("QComboBox{border:1px solid rgba(0,0,0,100);font-family:Microsoft YaHei;font-size:20px;"
-                                      "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:120px;}"
-                                      "QComboBox:hover{border:2px solid rgba(0,0,0,100);}");
+    m_pCurrentStyle = new QLineEdit();
+    m_pCurrentStyle->setReadOnly(true);
+    m_pCurrentStyle->setAlignment(Qt::AlignCenter);
+    m_pCurrentStyle->setStyleSheet("min-width:100px;font-weight:bold;font-family:Microsoft YaHei;font-size:20px;background-color:rgba(0,0,0,0);");
+
+//    m_pCmbProductStyle = new QComboBox();
+//    for(int i=0;i<GDataFactory::get_factory()->get_product_style_list().size();i++)
+//        m_pCmbProductStyle->insertItem(i,GDataFactory::get_factory()->get_product_style_list()[i]);
+//    m_pCmbProductStyle->setCurrentIndex(-1);
+//    m_pCmbProductStyle->setStyleSheet("QComboBox{border:1px solid rgba(0,0,0,100);font-family:Microsoft YaHei;font-size:20px;"
+//                                      "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:120px;}"
+//                                      "QComboBox:hover{border:2px solid rgba(0,0,0,100);}");
 
     QLabel* lCurrentThreshold = new QLabel(u8"当前门限:");
     lCurrentThreshold->setStyleSheet("background-color:rgba(0,0,0,0);");
@@ -78,7 +84,8 @@ ProcessInfoWgt::ProcessInfoWgt(QWidget *parent) : QWidget(parent)
     btnUpdate->setStyleSheet("background-color:rgba(0,0,0,0);min-width:100px;");
     hBoxThreshold->addStretch();
     hBoxThreshold->addWidget(lProductStyle);
-    hBoxThreshold->addWidget(m_pCmbProductStyle);
+    hBoxThreshold->addWidget(m_pCurrentStyle);
+//    hBoxThreshold->addWidget(m_pCmbProductStyle);
     hBoxThreshold->addWidget(lCurrentThreshold);
     hBoxThreshold->addWidget(m_pCurrentThreshold);
     hBoxThreshold->addWidget(lThreshold);
@@ -122,16 +129,23 @@ void ProcessInfoWgt::slot_rev_logs(const QString log)
 {
     this->m_pLogEdit->append(log);
 }
-
+static int totalCount =0;
 void ProcessInfoWgt::slot_rev_count_result(int countR, double aTime)
 {
     m_pProductAmount->setText(QString::number(countR));
     m_pCountTime->setText(QString("%1").arg(aTime));
+    totalCount++;
+    QLOG_WARN()<<u8"当前清点物料总数为:"<<totalCount;
     this->m_pLeftWgt->set_count_total();
 }
 
 void ProcessInfoWgt::slot_rev_bar_code(QString pStyle)
 {
+    vector<string> aa = split_string(pStyle.toStdString(),"-");
+
+    if(aa.size() == 2)
+        m_pCurrentStyle->setText(QString::fromStdString(aa[1]));
+
     m_pProductStyle->setText(pStyle);
 
     m_pProductAmount->setText("");
@@ -149,7 +163,7 @@ void ProcessInfoWgt::slot_update_threshold()
     QString strSql = QString("update public.%1 set \"Vision_Threshold\"='%2' where \"Product_Style_Code\"='%3'").
             arg(constProductStylePowerTable).
             arg(this->m_pCmbThreshold->currentText()).
-            arg(this->m_pCmbProductStyle->currentText());
+            arg(this->m_pCurrentStyle->text());
     QString strError;
     if(GDataFactory::get_pgsql()->ExecSql(strSql,strError))
     {

@@ -13,7 +13,8 @@
 #include <QCloseEvent>
 #include <QtEndian>
 #include <QDataStream>
-
+#include <QEventLoop>
+#include <QTimer>
 ElecManualWgt::ElecManualWgt(QWidget *parent) : QWidget(parent)
 {
     setWindowFlags(Qt::FramelessWindowHint | windowFlags()| Qt::Widget/*|Qt::WindowStaysOnTopHint*/);
@@ -160,49 +161,66 @@ ElecManualWgt::ElecManualWgt(QWidget *parent) : QWidget(parent)
     }
 
     QHBoxLayout* hBox1 = new QHBoxLayout();
-    QPushButton* btnScanCodeOver = new QPushButton(u8"扫码完成");
-    QPushButton* btnNG = new QPushButton(u8"扫码或无模板NG");
-    QPushButton* btnTakePicOver = new QPushButton(u8"接收源拍照完成");
+    btnScanCodeOver = new QPushButton(u8"扫码完成");
+    btnNG = new QPushButton(u8"扫码或无模板NG");
+    btnTakePicOver = new QPushButton(u8"接收源拍照完成");
+    btnScanCodeOver->setEnabled(false);
+    btnNG->setEnabled(false);
+    btnTakePicOver->setEnabled(false);
     hBox1->addWidget(btnScanCodeOver);
     hBox1->addWidget(btnNG);
     hBox1->addWidget(btnTakePicOver);
 
     QHBoxLayout* hBox2 = new QHBoxLayout();
-    QPushButton* btnCountOver = new QPushButton(u8"点料完成");
-    QPushButton* btnCountNG = new QPushButton(u8"点料NG");
-    QPushButton* btnStatusError = new QPushButton(u8"状态异常");
+    btnCountOver = new QPushButton(u8"点料完成");
+    btnCountNG = new QPushButton(u8"点料NG");
+    btnStatusError = new QPushButton(u8"状态异常");
+    btnCountOver->setEnabled(false);
+    btnCountNG->setEnabled(false);
+    btnStatusError->setEnabled(false);
     hBox2->addWidget(btnCountOver);
     hBox2->addWidget(btnCountNG);
     hBox2->addWidget(btnStatusError);
 
     QHBoxLayout* hBox3 = new QHBoxLayout();
-    QPushButton* btnJawBack = new QPushButton(u8"夹爪上下气缸返回");
-    QPushButton* btnJawDown = new QPushButton(u8"夹爪上下气缸下落");
-    QPushButton* btnJawHBack = new QPushButton(u8"夹爪水平返回");
+    btnJawBack = new QPushButton(u8"夹爪上下气缸返回");
+    btnJawDown = new QPushButton(u8"夹爪上下气缸下落");
+    btnJawHBack = new QPushButton(u8"夹爪水平返回");
+    btnJawBack->setEnabled(false);
+    btnJawDown->setEnabled(false);
+    btnJawHBack->setEnabled(false);
     hBox3->addWidget(btnJawBack);
     hBox3->addWidget(btnJawDown);
     hBox3->addWidget(btnJawHBack);
 
     QHBoxLayout* hBox4 = new QHBoxLayout();
-    QPushButton* btnJawHOut = new QPushButton(u8"夹爪水平伸出");
-    QPushButton* btnJawOff = new QPushButton(u8"夹爪关闭");
-    QPushButton* btnJawOn = new QPushButton(u8"夹爪打开");
+    btnJawHOut = new QPushButton(u8"夹爪水平伸出");
+    btnJawOff = new QPushButton(u8"夹爪关闭");
+    btnJawOn = new QPushButton(u8"夹爪打开");
+    btnJawHOut->setEnabled(false);
+    btnJawOff->setEnabled(false);
+    btnJawOn->setEnabled(false);
     hBox4->addWidget(btnJawHOut);
     hBox4->addWidget(btnJawOff);
     hBox4->addWidget(btnJawOn);
 
     QHBoxLayout* hBox5 = new QHBoxLayout();
-    QPushButton* btnAcceptProductBack = new QPushButton(u8"接料盘返回");
-    QPushButton* btnAcceptProductOut = new QPushButton(u8"接料盘伸出");
-    QPushButton* btnInProductOff = new QPushButton(u8"进料门关闭");
+    btnAcceptProductBack = new QPushButton(u8"接料盘返回");
+    btnAcceptProductOut = new QPushButton(u8"接料盘伸出");
+    btnInProductOff = new QPushButton(u8"进料门关闭");
+    btnAcceptProductOut->setEnabled(false);
+    btnInProductOff->setEnabled(false);
     hBox5->addWidget(btnAcceptProductBack);
     hBox5->addWidget(btnAcceptProductOut);
     hBox5->addWidget(btnInProductOff);
 
     QHBoxLayout* hBox6 = new QHBoxLayout();
-    QPushButton* btnInProductOn = new QPushButton(u8"进料门打开");
-    QPushButton* btnOutProductOff = new QPushButton(u8"出料门关闭");
-    QPushButton* btnOutProductOn = new QPushButton(u8"出料门打开");
+    btnInProductOn = new QPushButton(u8"进料门打开");
+    btnOutProductOff = new QPushButton(u8"出料门关闭");
+    btnOutProductOn = new QPushButton(u8"出料门打开");
+    btnInProductOn->setEnabled(false);
+    btnOutProductOff->setEnabled(false);
+    btnOutProductOn->setEnabled(false);
     hBox6->addWidget(btnInProductOn);
     hBox6->addWidget(btnOutProductOff);
     hBox6->addWidget(btnOutProductOn);
@@ -366,23 +384,42 @@ void ElecManualWgt::slot_btn_click(int btnID)
         GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W60,ADDRESS_W60_05,data.length(),data);
         break;
     case 21:
+    {
         QLOG_INFO()<<u8"material plate back";
+        this->btnAcceptProductBack->setEnabled(false);
         GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W60,ADDRESS_W60_06,data.length(),data);
+        QEventLoop eventloop;
+        QTimer::singleShot(3000,&eventloop,&QEventLoop::quit);
+        eventloop.exec();
+        this->btnInProductOff->setEnabled(true);
         break;
+    }
+//        btnAcceptProductBack<<btnAcceptProductOut<<btnInProductOff<<btnInProductOn
     case 22:
         QLOG_INFO()<<u8"material plate out";
+        this->btnAcceptProductOut->setEnabled(false);
+        this->btnAcceptProductBack->setEnabled(true);
         GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W60,ADDRESS_W60_07,data.length(),data);
         break;
     case 23:
         QLOG_INFO()<<u8"material-in door closed";
+        this->btnInProductOff->setEnabled(false);
+        this->btnInProductOn->setEnabled(true);
         GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W60,ADDRESS_W60_08,data.length(),data);
         break;
     case 24:
-        QLOG_INFO()<<u8"material-in door open";
+    {
+        QLOG_WARN()<<u8"material-in door closed";
+        this->btnInProductOn->setEnabled(false);
         GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W60,ADDRESS_W60_09,data.length(),data);
+        QEventLoop eventloop;
+        QTimer::singleShot(2000,&eventloop,&QEventLoop::quit);
+        eventloop.exec();
+        this->btnAcceptProductOut->setEnabled(true);
         break;
+    }
     case 25:
-        QLOG_INFO()<<u8"material-out door closed";
+        QLOG_INFO()<<u8"material-out door open";
         GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W60,ADDRESS_W60_0A,data.length(),data);
         break;
     case 26:

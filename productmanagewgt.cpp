@@ -188,15 +188,15 @@ void ProductManageWgt::set_table_data_query()
     QMap<QString,QString> tmpProductInfo;
     QString strSql;
     if((this->leSecondSecCode->text().trimmed() != "") && (this->leProductStyle->text().trimmed() != ""))
-        strSql = QString("select * from public.%1 where \"Product_Style_Code\"='%2' and \"Second_Section_Code\"='%3'").
+        strSql = QString("select * from public.%1 where \"Product_Style_Code\" like '\%%2\%' and \"Second_Section_Code\" like '\%%3\%'").
                 arg(constProductStyleMapTable).arg(this->leProductStyle->text()).arg(this->leSecondSecCode->text());
     else
     {
         if(this->leProductStyle->text().trimmed() != "")
-            strSql = QString("select * from public.%1 where \"Product_Style_Code\"='%2'").
+            strSql = QString("select * from public.%1 where \"Product_Style_Code\" like '\%%2\%'").
                     arg(constProductStyleMapTable).arg(this->leProductStyle->text());
         else if(this->leSecondSecCode->text().trimmed() != "")
-            strSql = QString("select * from public.%1 where \"Second_Section_Code\"='%2'").
+            strSql = QString("select * from public.%1 where \"Second_Section_Code\" like '\%%2\%'").
                     arg(constProductStyleMapTable).arg(this->leSecondSecCode->text());
         else
             strSql = QString("select * from public.%1").

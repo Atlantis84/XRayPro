@@ -40,6 +40,7 @@
 #include <QNetworkAccessManager>
 #include "imessagebox.h"
 #include <QDir>
+#include "AlgoQRCode.h"
 using namespace std;
 using namespace cv;
 #define READ_PLC  0x01 //function code of read plc
@@ -216,98 +217,6 @@ public:
 
     void count_product();
 
-    void pre1(Mat & src,Point center=Point(1563,1563),int r=120);
-
-    void pre2(Mat & src)
-    {
-        Mat gray, binary;
-        cvtColor(src, gray, COLOR_BGR2GRAY);
-        threshold(gray, binary, 200, 255, THRESH_BINARY_INV);
-        Mat kernel = Mat::ones(Size(15, 15), CV_8UC1);
-        morphologyEx(binary, binary, MORPH_OPEN, kernel);
-        Mat kerne2 = Mat::ones(Size(55, 55), CV_8UC1);
-        dilate(binary, binary, kerne2);
-
-        vector<vector<Point>> contours;
-        vector<Vec4i> hierachy;
-        findContours(binary, contours, hierachy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-
-        for (int i = 0; i < contours.size(); i++)
-        {
-            float are = cv::contourArea(contours[i]);
-            if (are > 50000)
-            {
-                drawContours(src, contours, i, Scalar(255, 255, 255), -1);
-
-            }
-        }
-    }
-
-    void pre3(Mat & src)
-    {
-        Mat gray, binary;
-        cvtColor(src, gray, COLOR_BGR2GRAY);
-        threshold(gray, binary, 200, 255, THRESH_BINARY_INV);
-        Mat kernel = Mat::ones(Size(55, 55), CV_8UC1);
-        morphologyEx(binary, binary, MORPH_CLOSE, kernel);
-        vector<vector<Point>> contours;
-        vector<Vec4i> hierachy;
-        findContours(binary, contours, hierachy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-        float max_are = 0;
-        int index = 0;
-        for (int i = 0; i < contours.size(); i++)
-        {
-            float are = contourArea(contours[i]);
-            if (are > max_are)
-            {
-                max_are = are;
-                index = i;
-            }
-        }
-
-        Rect rect=boundingRect(contours[index]);
-        rect.x -= 30;
-        rect.y -= 30;
-        rect.width += 60;
-        rect.height += 60;
-
-        src = src(rect);
-    }
-
-    void pre_big(Mat& src)
-    {
-        Mat gray, binary;
-        cvtColor(src, gray, COLOR_BGR2GRAY);
-        threshold(gray, binary, 200, 255, THRESH_BINARY_INV);
-
-        Mat kernel = Mat::ones(Size(30, 30), CV_8UC1);
-        morphologyEx(binary, binary, MORPH_CLOSE, kernel);
-
-
-
-        vector<vector<Point>> contours;
-        vector<Vec4i> hierachy;
-        findContours(binary, contours, hierachy, RETR_TREE, CHAIN_APPROX_SIMPLE);
-        int index = -1;
-        float max_area = 0;
-        for (int i = 0; i < contours.size();i++)
-        {
-            float area = contourArea(contours[i]);
-            if (area > max_area)
-            {
-                index = i;
-                max_area = area;
-            }
-        }
-        Rect rect = boundingRect(contours[index]);
-        rect.x -= 20;
-        rect.y -= 20;
-        rect.width += 20;
-        rect.height += 20;
-
-        src = src(rect);
-    }
-
     cv::Mat get_current_image_mat()
     {
         return m_pCurrentImage;
@@ -400,6 +309,9 @@ public:
                 QFile::remove(strPath);
         }
     }
+
+    HObject mat_to_hobject(const cv::Mat &image);
+    vector<string> halcon_QR_code(const HObject ho_Image);
 
     static GDataFactory* get_factory()
     {
@@ -600,6 +512,13 @@ public:
             m_pAccessManager = new QNetworkAccessManager();
         return m_pAccessManager;
     }
+
+    static AlgoQRCode* get_AlgoQRCode()
+    {
+        if(m_pAlgoQRCode == nullptr)
+            m_pAlgoQRCode = new AlgoQRCode();
+        return m_pAlgoQRCode;
+    }
 private:
     static TopWidget* m_pTopWgt;
     static MainWindow* m_pMainWindow;
@@ -629,6 +548,7 @@ private:
     static ProductManageWgt* m_pProductManageWgt;
     static WaitCountWgt* m_pWaitCountWgt;
     static QNetworkAccessManager *m_pAccessManager;
+    static AlgoQRCode* m_pAlgoQRCode;
 signals:
     void signal_spread_pixmap_to_ui(const QPixmap pm);
     void signal_serial_data(QByteArray data);

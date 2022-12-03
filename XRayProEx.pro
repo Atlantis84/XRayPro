@@ -29,6 +29,7 @@ QMAKE_CXXFLAGS_RELEASE = -Od -ZI -MD
 QMAKE_LFLAGS_RELEASE = /DEBUG /INCREMENTAL:NO
 
 SOURCES += \
+        AlgoQRCode.cpp \
         aboutwgt.cpp \
         centralwgt.cpp \
         circlewidget.cpp \
@@ -59,9 +60,11 @@ SOURCES += \
         visiontemplatewgt.cpp \
         waitcountwgt.cpp \
         welcomedlg.cpp \
+        x-ray-pre.cpp \
         zoommoveobj.cpp
 
 HEADERS += \
+        AlgoQRCode.h \
         BarCodeDecoding.h \
         CameraInterface.h \
         MvCamera.h \
@@ -95,6 +98,7 @@ HEADERS += \
         visiontemplatewgt.h \
         waitcountwgt.h \
         welcomedlg.h \
+        x-ray-pre.h \
         zoommoveobj.h
 
 INCLUDEPATH += .\xrayinclude

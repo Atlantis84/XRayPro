@@ -22,6 +22,7 @@ private:
     QLineEdit* m_pProductStyle;
     QLineEdit* m_pCountStep;
     QLineEdit* m_pCurrentThreshold;
+    QLineEdit* m_pCurrentStyle;
 
     QComboBox* m_pCmbProductStyle;
     QComboBox* m_pCmbThreshold;

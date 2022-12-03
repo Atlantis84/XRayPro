@@ -8,6 +8,7 @@
 #include <QTime>
 #include <QShowEvent>
 #include "QsLog.h"
+#include "x-ray-pre.h"
 TemplateConfigWgt::TemplateConfigWgt(QWidget *parent) : QWidget(parent)
 {
     QVBoxLayout* vAll = new QVBoxLayout();
@@ -27,13 +28,17 @@ TemplateConfigWgt::TemplateConfigWgt(QWidget *parent) : QWidget(parent)
     QHBoxLayout* hBox_7 = new QHBoxLayout();
     QLabel* labelProStyle = new QLabel(u8"产品类型:");
     labelProStyle->setStyleSheet("background-color:rgba(0,0,0,0)");
-    cmb_product_style = new QComboBox();
-    cmb_product_style->setStyleSheet("QComboBox{border:1px solid rgba(0,0,0,100);font-family:Microsoft YaHei;font-size:20px;"
-                                           "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:100px;}"
-                                           "QComboBox:hover{border:2px solid rgba(0,0,0,100);}");
+//    cmb_product_style = new QComboBox();
+//    cmb_product_style->setStyleSheet("QComboBox{border:1px solid rgba(0,0,0,100);font-family:Microsoft YaHei;font-size:20px;"
+//                                           "color:rgba(0,0,0,255);background-color:rgba(0,0,0,0);min-width:100px;}"
+//                                           "QComboBox:hover{border:2px solid rgba(0,0,0,100);}");
+    le_product_style = new QLineEdit();
+    le_product_style->setText("ABCDEF");
+    le_product_style->setAlignment(Qt::AlignCenter);
+    le_product_style->setStyleSheet("min-width:100px;font-weight:bold;font-family:Microsoft YaHei;font-size:20px;background-color:rgba(0,0,0,0);");
 
     hBox_7->addWidget(labelProStyle);
-    hBox_7->addWidget(cmb_product_style);
+    hBox_7->addWidget(le_product_style);
 
     QHBoxLayout* hBox_8 = new QHBoxLayout();
     QLabel* labelSenderCurrent = new QLabel(u8"发射源电流:");
@@ -171,8 +176,8 @@ void TemplateConfigWgt::paintEvent(QPaintEvent *event)
 
 void TemplateConfigWgt::slot_receiver_take_image()
 {
-    GDataFactory::get_zoom_obj()->set_product_style(this->cmb_product_style->currentText());
-    GDataFactory::get_factory()->set_sender_power(this->cmb_product_style->currentText());
+    GDataFactory::get_zoom_obj()->set_product_style(this->le_product_style->text());
+    GDataFactory::get_factory()->set_sender_power(this->le_product_style->text());
     emit signal_notify_take_picture();
 }
 
@@ -184,6 +189,8 @@ void TemplateConfigWgt::slot_generate_template()
 void TemplateConfigWgt::showEvent(QShowEvent *event)
 {
     Q_UNUSED(event);
+    this->le_product_style->setText("");
+    return;
     cmb_product_style->clear();
     QMap<QString,QString> tmpProductInfo;
     tmpProductInfo = GDataFactory::get_factory()->get_product_info();
@@ -210,7 +217,7 @@ void TemplateConfigWgt::update_power_para()
 {
     //set sender para
     QString strSql = QString("select * from public.%1 where \"Product_Style_Code\"='%2'").
-            arg(constProductStyleMapTable).arg(this->cmb_product_style->currentText());
+            arg(constProductStyleMapTable).arg(this->le_product_style->text());
     QSqlQuery queryResult;
     QString strError;
     if(GDataFactory::get_pgsql()->GetQueryResult(strSql,queryResult))
@@ -218,7 +225,7 @@ void TemplateConfigWgt::update_power_para()
         QLOG_INFO()<<"query database SUCCESS!";
         strSql = QString("update public.%1 set \"Vision_Step\"='%2',\"Vision_Threshold\"='%3' where \"Product_Style_Code\"='%4'").
                 arg(constProductStylePowerTable).arg(this->cmb_vision_step->currentText()).
-                arg(this->cmb_vision_threshold->currentText()).arg(this->cmb_product_style->currentText());
+                arg(this->cmb_vision_threshold->currentText()).arg(this->le_product_style->text());
         if(GDataFactory::get_pgsql()->ExecSql(strSql,strError))
         {
             QLOG_INFO()<<"update DB SUCCESS!";
@@ -236,7 +243,7 @@ void TemplateConfigWgt::update_power_para()
 void TemplateConfigWgt::get_step_and_threshold(float &step, float &threshold)
 {
     QString strSql = QString("select * from public.%1 where \"Product_Style_Code\"='%2'").
-            arg(constProductStylePowerTable).arg(this->cmb_product_style->currentText());
+            arg(constProductStylePowerTable).arg(this->le_product_style->text());
     QSqlQuery queryResult;
     QString strError;
     if(GDataFactory::get_pgsql()->GetQueryResult(strSql,queryResult))
@@ -248,7 +255,7 @@ void TemplateConfigWgt::get_step_and_threshold(float &step, float &threshold)
             threshold = this->cmb_vision_threshold->currentText().toFloat();
             strSql = QString("insert into public.%1 values('%2','%3','%4','%5','%6')").
                     arg(constProductStylePowerTable).
-                    arg(this->cmb_product_style->currentText()).
+                    arg(this->le_product_style->text()).
                     arg(this->cmb_sender_voltage->currentText()).
                     arg(this->cmb_sender_current->currentText()).
                     arg(this->cmb_vision_step->currentText()).
@@ -281,13 +288,13 @@ static float m_pVisionThreshold;
 void TemplateConfigWgt::slot_count_test()
 {
     update_power_para();
-    configProductStyle = this->cmb_product_style->currentText();
+    configProductStyle = this->le_product_style->text();
     this->le_product_amount->setText("");
-    QString tmpProductStyle = this->cmb_product_style->currentText();
+    QString tmpProductStyle = this->le_product_style->text();
     tmpProductStyle.prepend("e:/template/");
     tmpProductStyle.append(".png");
     tempMat = cv::imread(tmpProductStyle.toStdString());
-    QString tmp = this->cmb_product_style->currentText();
+    QString tmp = this->le_product_style->text();
     tmp.prepend("e:/Initial/");
     tmp.append(".jpg");
     currentFullImage = cv::imread(tmp.toStdString());
@@ -301,10 +308,10 @@ void TemplateConfigWgt::slot_count_test()
 
 void TemplateConfigWgt::slot_set_sender_para()
 {
-    GDataFactory::get_factory()->set_current_product_style(this->cmb_product_style->currentText());
+    GDataFactory::get_factory()->set_current_product_style(this->le_product_style->text());
     //set sender para
     QString strSql = QString("select * from public.%1 where \"Product_Style_Code\"='%2'").
-            arg(constProductStylePowerTable).arg(this->cmb_product_style->currentText());
+            arg(constProductStylePowerTable).arg(this->le_product_style->text());
     QSqlQuery queryResult;
     QString strError;
     if(GDataFactory::get_pgsql()->GetQueryResult(strSql,queryResult))
@@ -313,7 +320,7 @@ void TemplateConfigWgt::slot_set_sender_para()
         if(queryResult.size() == 0)//insert new row
         {
             strSql = QString("insert into %1 values('%2','%3','%4')").
-                    arg(constProductStylePowerTable).arg(this->cmb_product_style->currentText()).
+                    arg(constProductStylePowerTable).arg(this->le_product_style->text()).
                     arg(this->cmb_sender_voltage->currentText()).arg(this->cmb_sender_current->currentText());
             if(GDataFactory::get_pgsql()->ExecSql(strSql,strError))
             {
@@ -328,7 +335,7 @@ void TemplateConfigWgt::slot_set_sender_para()
         {
             strSql = QString("update public.%1 set \"Sender_Voltage\"='%2',\"Sender_Current\"='%3' where \"Product_Style_Code\"='%4'").
                     arg(constProductStylePowerTable).arg(this->cmb_sender_voltage->currentText()).
-                    arg(this->cmb_sender_current->currentText()).arg(this->cmb_product_style->currentText());
+                    arg(this->cmb_sender_current->currentText()).arg(this->le_product_style->text());
             if(GDataFactory::get_pgsql()->ExecSql(strSql,strError))
             {
                 QLOG_INFO()<<"update DB SUCCESS!";
@@ -370,23 +377,7 @@ void CountThread::run()
         QTime tm;
         tm.start();
         TemplateBasedMethod t;
-        if(configProductStyle == "0402" ||
-                configProductStyle == "0603"||
-                configProductStyle == "0805" ||
-                configProductStyle == "1206")
-        {
-            GDataFactory::get_factory()->pre1(currentFullImage);
-            QLOG_INFO()<<"step1";
-            GDataFactory::get_factory()->pre2(currentFullImage);
-            QLOG_INFO()<<"step2";
-            GDataFactory::get_factory()->pre3(currentFullImage);
-            QLOG_INFO()<<"step3";
-        }
-        else
-        {
-            GDataFactory::get_factory()->pre1(currentFullImage);
-            GDataFactory::get_factory()->pre_big(currentFullImage);
-        }
+        xray_pre(currentFullImage);
         t.setImage(currentFullImage);
         t.setTemplateImage(tempMat);
         t.setMaxMatch(20000);
