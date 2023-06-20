@@ -327,6 +327,7 @@ void MainWindow::slot_proc_plc_notify(QByteArray data)
                     QTimer::singleShot(300, &loop, SLOT(quit()));
                     loop.exec();
                     image1 = image = GDataFactory::get_camera_interface()->GetImage();
+//                    image1 = GDataFactory::get_camera_interface()->GetImage();;
                     GDataFactory::get_camera_interface()->StopGrabbing();
 
                     if (!image.empty() && image.data)

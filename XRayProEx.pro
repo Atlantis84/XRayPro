@@ -41,6 +41,7 @@ SOURCES += \
         gdatafactory.cpp \
         imessagebox.cpp \
         leftwidget.cpp \
+        logindialog.cpp \
         main.cpp \
         mainwindow.cpp \
         monitorthread.cpp \
@@ -80,6 +81,7 @@ HEADERS += \
         gdatafactory.h \
         imessagebox.h \
         leftwidget.h \
+        logindialog.h \
         mainwindow.h \
         monitorthread.h \
         paraconfigwgt.h \
@@ -132,3 +134,7 @@ RESOURCES += \
     res.qrc
 
 win32: LIBS += -lWinMM
+
+DEFINES -= UNICODE
+DEFINES += UMBCS
+QMAKE_CXXFLAGS -= -Zc:strictStrings

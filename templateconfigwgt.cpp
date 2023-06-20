@@ -291,7 +291,7 @@ void TemplateConfigWgt::slot_count_test()
     configProductStyle = this->le_product_style->text();
     this->le_product_amount->setText("");
     QString tmpProductStyle = this->le_product_style->text();
-    tmpProductStyle.prepend("e:/template/");
+    tmpProductStyle.prepend(u8"e:/template/");
     tmpProductStyle.append(".png");
     tempMat = cv::imread(tmpProductStyle.toStdString());
     QString tmp = this->le_product_style->text();

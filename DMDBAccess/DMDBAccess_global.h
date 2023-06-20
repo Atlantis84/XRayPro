@@ -32,4 +32,5 @@
 //支撑架数据表
 const QString constProductStyleMapTable = QString("\"Product_Style_Map\"");
 const QString constProductStylePowerTable = QString("\"Product_Style_Power_Map\"");
+const QString constCountResultTable = QString("\"Count_Result_Table\"");
 #endif // DMDBACCESS_GLOBAL_H

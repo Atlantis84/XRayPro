@@ -17,6 +17,14 @@
 #include <QFileInfo>
 #include <QJsonParseError>
 #include "x-ray-pre.h"
+#include <functional>
+#include <thread>
+#include <future>
+#include <vector>
+#include <QLibrary>
+#include <iostream>
+using std::vector;
+using namespace std;
 TopWidget* GDataFactory::m_pTopWgt = nullptr;
 MainWindow* GDataFactory::m_pMainWindow = nullptr;
 CentralWgt* GDataFactory::m_pCentralWgt = nullptr;
@@ -46,8 +54,9 @@ ProductManageWgt* GDataFactory::m_pProductManageWgt = nullptr;
 WaitCountWgt* GDataFactory::m_pWaitCountWgt = nullptr;
 QNetworkAccessManager* GDataFactory::m_pAccessManager = nullptr;
 AlgoQRCode* GDataFactory::m_pAlgoQRCode = nullptr;
+LoginDialog* GDataFactory::m_pLoginDialog = nullptr;
 
-QImage GDataFactory::mat_to_qimage(const Mat &cvImage)
+QImage GDataFactory::mat_to_qimage(const int saveSign,const Mat &cvImage)
 {
     vector<uchar> imgBuf;
     imencode(".bmp", cvImage, imgBuf);
@@ -60,7 +69,11 @@ QImage GDataFactory::mat_to_qimage(const Mat &cvImage)
     {
         QString current_date =current_date_time.toString("yyyyMMddhhmmss");
         QString imageName = current_date +".jpg";
-        image.save(imageName);
+        if(saveSign == 0)//the image of camera do not save
+            ;
+        else
+//            image.save(imageName);
+            ;
     }
     else {
         QString current_path ="e:/Initial/";
@@ -72,9 +85,9 @@ QImage GDataFactory::mat_to_qimage(const Mat &cvImage)
     return image;
 }
 
-QPixmap GDataFactory::mat_to_pixmap(const Mat &cvImage)
+QPixmap GDataFactory::mat_to_pixmap(const int saveSign,const Mat &cvImage)
 {
-    return QPixmap::fromImage(mat_to_qimage(cvImage));
+    return QPixmap::fromImage(mat_to_qimage(saveSign,cvImage));
 }
 
 void GDataFactory::set_sender_power(QString strStyle)
@@ -123,6 +136,58 @@ void GDataFactory::get_step_and_threshold_run(float &step, float &threshold)
     }
 }
 
+void GDataFactory::submit_msg_to_DB(int amount)
+{
+    QDate date = QDate::currentDate();
+    QTime time = QTime::currentTime();
+    QString strSql = QString("select max(id) from public.%1").
+            arg(constCountResultTable);
+
+    int id = -1;
+    QSqlQuery queryResult;
+    if(GDataFactory::get_pgsql()->GetQueryResult(strSql,queryResult))
+    {
+        while(queryResult.next())
+        {
+            id = queryResult.value(0).toInt();
+        }
+    }
+
+    strSql = QString("insert into public.%1 (id,\"SN\",\"Product_Amount\",\"Count_Date\",\"Count_Time\") "
+                     "values(%2,'%3','%4','%5','%6')").
+                arg(constCountResultTable).arg(id+1).arg(m_pCurrentSecondSectionCode).arg(QString::number(amount)).
+                arg(date.toString("yyyy/MM/dd")).
+                arg(time.toString("HH:mm:ss"));
+
+    QString strError;
+    if(GDataFactory::get_pgsql()->ExecSql(strSql,strError))
+        QLOG_INFO()<<"insert into DB SUCCESS!";
+    else {
+        QLOG_WARN()<<"insert into DB FAILED!";
+    }
+//    vector<int> vecT = {1,2,3,4,5,6};
+//    std::packaged_task<int(const vector<int>&)> pl([](const vector<int>& vec)
+//    {
+//        return *(std::max_element(vec.begin(),vec.end()));
+//    });
+
+//    static int maxID=-1;
+//    std::packaged_task<void(std::shared_future<int>&)> res([](std::shared_future<int>& sfu)
+//    {
+//        sfu.wait();
+//        maxID = sfu.get();
+//     });
+
+//    std::shared_future<int> s_fu(pl.get_future());
+//    if(pl.valid())
+//    {
+//        std::thread t1(ref(res), ref(s_fu));
+//        QThread::msleep(10);
+//        std::thread(ref(pl), ref(vecT)).join();
+//        t1.join();
+//    }
+}
+
 static cv::Mat currentFullImage;
 static cv::Mat tempMat;
 static QString normalProductStyle;
@@ -133,9 +198,22 @@ void GDataFactory::count_product()
 {
     QLOG_WARN()<<u8"--- 开始点料 ---";
 
+    if(m_pCurrentProductStyle == "")
+    {
+        QByteArray tmpData;
+        tmpData.append(static_cast<char>(0x01));
+        GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W203,ADDRESS_W203_00,tmpData.length(),tmpData);
+        QThread::msleep(200);
+        GDataFactory::get_udp_service()->send_message_to_plc(WRITE_PLC,ADDRESS_W203,ADDRESS_W203_01,tmpData.length(),tmpData);
+        IMessageBox* msgBox = new IMessageBox(3);
+        msgBox->warning(u8"当前物料号不存在，请录入物料");
+        GDataFactory::get_main_window()->slot_start_run();
+        return;
+    }
+
     normalProductStyle = m_pCurrentProductStyle;
     QString tmpProductStyle = m_pCurrentProductStyle;
-    tmpProductStyle.prepend("e:/template/");
+    tmpProductStyle.prepend(u8"e:/template/");
     tmpProductStyle.append(".png");
     QLOG_WARN()<<u8"当前模板为:"<<tmpProductStyle;
     QFile file(tmpProductStyle);
@@ -174,58 +252,14 @@ void NormalCountThread::run()
         QTime timeS;
         timeS.start();
         TemplateBasedMethod t;
-//        if(normalProductStyle == "0402" ||
-//                normalProductStyle == "0603" ||
-//                normalProductStyle == "0805" ||
-//                normalProductStyle == "1206" ||
-//                normalProductStyle == "C1001"||
-//                normalProductStyle == "C1002"||
-//                normalProductStyle == "C1003"||
-//                normalProductStyle == "C1004"||
-//                normalProductStyle == "C1005"||
-//                normalProductStyle == "C1006"||
-//                normalProductStyle == "C1007"||
-//                normalProductStyle == "C1008"||
-//                normalProductStyle == "C2001"||
-//                normalProductStyle == "C2002"||
-//                normalProductStyle == "C2003"||
-//                normalProductStyle == "C2004"||
-//                normalProductStyle == "C2005"||
-//                normalProductStyle == "C2006"||
-//                normalProductStyle == "C2007"||
-//                normalProductStyle == "C2008"||
-//                normalProductStyle == "C3001"||
-//                normalProductStyle == "C3002"||
-//                normalProductStyle == "C3003"||
-//                normalProductStyle == "C3004"||
-//                normalProductStyle == "C3005"||
-//                normalProductStyle == "C3006"||
-//                normalProductStyle == "C3007"||
-//                normalProductStyle == "C3008")
-//        {
-//            GDataFactory::get_factory()->pre1(currentFullImage);
-//            QLOG_WARN()<<"the small product pre1";
-//            GDataFactory::get_factory()->pre2(currentFullImage);
-//            QLOG_WARN()<<"the small product pre2";
-//            GDataFactory::get_factory()->pre3(currentFullImage);
-//            QLOG_WARN()<<"the small product pre3";
-//        }
-//        else
-//        {
-//            GDataFactory::get_factory()->pre1(currentFullImage);
-//            QLOG_WARN()<<"the big product pre1";
-//            GDataFactory::get_factory()->pre_big(currentFullImage);
-//            QLOG_WARN()<<"the big product pre_big";
-//        }
+
         xray_pre(currentFullImage);
         t.setImage(currentFullImage);
         t.setTemplateImage(tempMat);
         t.setMaxMatch(20000);
-//        QLOG_WARN()<<"the step is:"<<m_pVisionStep<<";the threshold is:"<<m_pVisionThreshold;
         if((m_pVisionStep>0.0)&&(m_pVisionStep < 1.0))
         {
             t.setAngleStep(m_pVisionStep);
-//            QLOG_WARN()<<"use DB step";
         }
         else
             t.setAngleStep(0.5);
@@ -233,7 +267,6 @@ void NormalCountThread::run()
         if((m_pVisionStep>0.0)&&(m_pVisionStep < 1.0))
         {
             t.setThreshold(m_pVisionThreshold);
-//            QLOG_WARN()<<"use DB threshold";
         }
         else {
             t.setThreshold(0.75);
@@ -242,6 +275,7 @@ void NormalCountThread::run()
         t.TemplateMatchWithNCC();
 
         UnitInfo info = t.getCheckResult();
+        QLOG_WARN()<<u8"当前物料数量为:"<<info.units_num;
         emit signal_normal_count_over(info.units_num,(double)(timeS.elapsed())/1000.0);
         break;
     }
@@ -257,10 +291,48 @@ void GDataFactory::slot_normal_count_over(int amount, double counttime)
     emit signal_notify_count_result(amount,counttime);
     //post msg to MES
     submit_msg_to_mes(m_pCurrentFullSN,QString("%1").arg(amount));
+    submit_msg_to_DB(amount);
 }
 
 void GDataFactory::submit_msg_to_mes(QString currentSN, QString productQuantity)
 {
+    QLOG_WARN()<<"productQuantity is:"<<productQuantity;
+    //notify printer to print the SN and the product quantity
+    if(get_config_para("USE_PRINTER") == "0")
+        ;
+    else {
+//        typedef int (*TSCabout)();
+//        typedef int (*TSCopenport)(char*);
+//        typedef int (*TSCsendcommand)(char*);
+//        typedef int (*TSCcloseport)();
+
+//        QLibrary tscdll("C:\\TSCLIB.dll");
+//        if(tscdll.load())
+//        {   //add about() function
+//             TSCopenport openport=(TSCopenport)tscdll.resolve("openport");    //add about() function
+//             TSCcloseport closeport=(TSCcloseport)tscdll.resolve("closeport");    //add closeport() function
+//             TSCsendcommand sendcommand=(TSCsendcommand)tscdll.resolve("sendcommand");    //add about() function
+
+
+
+//             openport("TSC TTP-244 Pro");
+//    //         sendcommand("SET TEAR ON");
+//             sendcommand("SIZE 63 mm, 33 mm");
+//             sendcommand("DIRECTION 1");
+//             sendcommand("CLS");
+////             currentSN.prepend("BARCODE 16,56, \"128\",70,1,0,1,1, \"");
+////             currentSN.append("\"");
+////             sendcommand(currentSN.toLatin1().data());
+//             productQuantity.prepend("BARCODE 96,152, \"128\",70,1,0,4,4, \"");
+//             productQuantity.append("\"");
+//             sendcommand(productQuantity.toLatin1().data());
+//    //             sendcommand("BARCODE 16,168, \"128\",70,1,0,2,2, \"2549\"");
+//             sendcommand("PRINT 1");
+//             closeport();
+        ;
+        }
+    //notify printer to print the SN and the product quantity
+
     QString tmpurl;
     tmpurl = "http://";
     tmpurl.append(get_config_para("MES_IP"));
@@ -278,7 +350,7 @@ void GDataFactory::submit_msg_to_mes(QString currentSN, QString productQuantity)
     QJsonObject reqJson;
     reqJson.insert("TYPE","X");
     reqJson.insert("WORKSTATION",u8"TLQ");
-    reqJson.insert("EMP","");
+    reqJson.insert("EMP",GDataFactory::get_factory()->get_user_account());
     reqJson.insert("SN",currentSN);
     reqJson.insert("QTY",productQuantity);
     QJsonDocument doc_data(reqJson);
@@ -326,7 +398,7 @@ void GDataFactory::submit_msg_to_mes(QString currentSN, QString productQuantity)
 void GDataFactory::scan_camera_mat_to_pixmap(const Mat& cvImage)
 {
     if(get_system_status() == Run_Status)
-        emit signal_spread_pixmap_to_ui(mat_to_pixmap(cvImage));
+        emit signal_spread_pixmap_to_ui(mat_to_pixmap(0,cvImage));
 }
 
 QMap<QString,QString> GDataFactory::get_product_info()
@@ -354,6 +426,7 @@ GDataFactory::GDataFactory()
 {
     pComm = nullptr;
     pCommCode = nullptr;
+    m_pCurrentUserAccount = "";
     m_pCurrentVoltage = "400";
     m_pCurrentCurrent = "6000";
     m_pUseCamera = true;
@@ -542,6 +615,8 @@ void GDataFactory::load_json_config(char *filename)
                     ConfigInfo.insert("IMAGE_STRETCH_FILL",obj.value("IMAGE_STRETCH_FILL").toString());
                 if(obj.contains("USE_CAMERA"))
                     ConfigInfo.insert("USE_CAMERA",obj.value("USE_CAMERA").toString());
+                if(obj.contains("USE_PRINTER"))
+                    ConfigInfo.insert("USE_PRINTER",obj.value("USE_PRINTER").toString());
             }
         }
     }
@@ -1043,11 +1118,11 @@ void GDataFactory::raw_to_mat(unsigned short *pBuffer, const int nWidth, const i
 
     if(m_pSystemStatus == Run_Status)
     {
-        emit signal_spread_pixmap_to_ui(mat_to_pixmap(out));
+        emit signal_spread_pixmap_to_ui(mat_to_pixmap(1,out));
         emit signal_start_to_count();
     }
     else {
-        emit signal_spread_pixmap_to_ui(mat_to_pixmap(out));
+        emit signal_spread_pixmap_to_ui(mat_to_pixmap(1,out));
     }
 }
 
@@ -1056,7 +1131,7 @@ QString GDataFactory::get_product_style(QString strSN)
     QString strSql = QString("select * from public.%1 where \"Second_Section_Code\"='%2'").
             arg(constProductStyleMapTable).arg(strSN);
     QSqlQuery queryResult;
-    QString strStyle;
+    QString strStyle="";
     if(get_pgsql()->GetQueryResult(strSql,queryResult))
     {
         QLOG_TRACE()<<u8"query database success!";

@@ -7,7 +7,7 @@
 #include <QComboBox>
 #include <ActiveQt/QAxObject>
 #include <QThread>
-
+#include <QDateEdit>
 class ImportThread: public QThread
 {
     Q_OBJECT
@@ -56,6 +56,8 @@ private:
     QVector<Struct_Confirm> m_Struct_Confirm;
 
     ImportThread* m_pImportThread;
+
+    QDateEdit* m_pDateEdit;
 signals:
 
 public slots:
@@ -64,6 +66,8 @@ public slots:
     void slot_delete();
     void slot_import();
     void slot_import_over();
+    void slot_export();
+    void slot_export_count_result();
 };
 
 #endif // PRODUCTMANAGEWGT_H

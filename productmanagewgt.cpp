@@ -14,15 +14,28 @@
 #include <QShowEvent>
 #include "QsLog.h"
 #include <QFileDialog>
+#include <QSqlQuery>
+#include <QTextCodec>
 static QString str_excel_path;
 ProductManageWgt::ProductManageWgt(QWidget *parent) : QWidget(parent)
 {
+    m_pDateEdit = new QDateEdit();
+    m_pDateEdit->setDateTime(QDateTime::currentDateTime());
+    m_pDateEdit->setDisplayFormat("yyyy/MM/dd");
+    m_pDateEdit->setStyleSheet("QDateEdit{color:rgb(0,0,0);border:1px solid rgba(0,0,0,100);\
+                            background-color:rgba(235,236,240,255);font-family:\"Microsoft YaHei\";\
+                            font-size: 20px;font-weight:normal;\
+                            border-radius:0px;min-width:130px;\
+                            selection-background-color:rgba(0,0,0,100);\
+                            selection-color:#5D5C6C;}\
+                            ");
+
     setWindowFlags(Qt::FramelessWindowHint | windowFlags() | Qt::Widget);
     setWindowIcon(QIcon(":/icon/24x24.png"));
-    resize(600,600);
+    resize(750,700);
     TitleBar *pTitleBar = new TitleBar(this);
     pTitleBar->setTitle(u8"盘料产品管理");
-    pTitleBar->setFixedWidth(600);
+    pTitleBar->setFixedWidth(750);
     installEventFilter(pTitleBar);
 
     QVBoxLayout* vAll = new QVBoxLayout();
@@ -48,6 +61,8 @@ ProductManageWgt::ProductManageWgt(QWidget *parent) : QWidget(parent)
     leProductStyle->setStyleSheet("min-width:150px;max-width:150px;");
 
     QGroupBox* grpConfigData = new QGroupBox(u8"配置信息");
+    QGroupBox* grpCountInfo = new QGroupBox(u8"点料信息导出");
+    grpCountInfo->setStyleSheet("QGroupBox{border:1px solid rgba(0,0,0,100);color:rgb(0,0,0);background-color:rgba(0,0,0,0);}");
     QPushButton* btnQuery = new QPushButton(u8" 查  询 ");
     connect(btnQuery,SIGNAL(clicked()),this,SLOT(slot_query()));
     QPushButton* btnAdd = new QPushButton(u8" 添  加 ");
@@ -55,6 +70,11 @@ ProductManageWgt::ProductManageWgt(QWidget *parent) : QWidget(parent)
     QPushButton* btnImport = new QPushButton(u8" 表 格 导 入 ");
 //    btnImport->setStyleSheet("min-height:50px;max-height:50px;");
     connect(btnImport,SIGNAL(clicked()),this,SLOT(slot_import()));
+    QPushButton* btnExport = new QPushButton(u8" 表 格 导 出 ");
+    btnExport->setStyleSheet("min-height:50px;max-height:50px;");
+    connect(btnExport,SIGNAL(clicked()),this,SLOT(slot_export()));
+    QPushButton* btnCountExport = new QPushButton(u8" 导 出 点 料 信 息 ");
+    connect(btnCountExport,SIGNAL(clicked()),this,SLOT(slot_export_count_result()));
     QPushButton* btnDelete = new QPushButton(u8" 删 除 数 据 ");
 //    btnDelete->setStyleSheet("min-height:50px;max-height:50px;");
     connect(btnDelete,SIGNAL(clicked()),this,SLOT(slot_delete()));
@@ -77,18 +97,31 @@ ProductManageWgt::ProductManageWgt(QWidget *parent) : QWidget(parent)
     vBox4->addWidget(btnImport);
     vBox4->addWidget(btnDelete);
 
+    QVBoxLayout* vBox5 = new QVBoxLayout();
+    vBox5->addWidget(btnExport);
+
     QHBoxLayout* hBoxAll = new QHBoxLayout();
-    hBoxAll->addStretch();
+//    hBoxAll->addStretch();
     hBoxAll->addLayout(vBox2);
     hBoxAll->addLayout(vBox3);
     hBoxAll->addLayout(vBox4);
-    hBoxAll->addStretch();
+    hBoxAll->addLayout(vBox5);
+//    hBoxAll->addStretch();
     grpConfigData->setLayout(hBoxAll);
+
+    QHBoxLayout* hBox3 = new QHBoxLayout();
+    hBox3->addStretch();
+    hBox3->addWidget(m_pDateEdit);
+    hBox3->addSpacing(50);
+    hBox3->addWidget(btnCountExport);
+    hBox3->addStretch();
+    grpCountInfo->setLayout(hBox3);
 
     vAll->addSpacing(pTitleBar->height());
     vAll->addWidget(grpAllData);
 //    vAll->addWidget(createTableWidget());
     vAll->addWidget(grpConfigData);
+    vAll->addWidget(grpCountInfo);
     this->setLayout(vAll);
 
     m_pImportThread = new ImportThread();
@@ -444,4 +477,97 @@ void ProductManageWgt::slot_import_over()
 {
     GDataFactory::get_wait_count_wgt()->hide();
     m_pImportThread->terminate();
+}
+
+void ProductManageWgt::slot_export()
+{
+    QString dtStr=u8"e:/已录入物料信息"+QDateTime::currentDateTime().toString("yyyyMMddHHmmss")+".csv";
+    QFile file;
+    file.setFileName(dtStr);
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        QLOG_WARN()<<"Open file Failed!";
+        return;
+    }
+
+    QTextStream out(&file);
+    QString s1 = "SN";
+    QString s2 = "Style";
+    out<<s1<<",";
+    out<<s2<<",";
+    out<<"\n";
+
+    QString strSql = QString("select * from public.%1").
+            arg(constProductStyleMapTable);
+    QSqlQuery queryResult;
+    if(GDataFactory::get_pgsql()->GetQueryResult(strSql,queryResult))
+    {
+        QLOG_TRACE()<<u8"get product info, query database success!";
+        while(queryResult.next())
+        {
+            out<<queryResult.value(0).toString()<<",";
+            out<<queryResult.value(1).toString()<<",";
+            out<<"\n";
+        }
+        IMessageBox* msgBox = new IMessageBox(2);
+        msgBox->warning(u8"物料导出成功!");
+    }
+    else
+    {
+        QLOG_WARN()<<u8"get product info, query database failed!";
+        IMessageBox* msgBox = new IMessageBox(3);
+        msgBox->warning(u8"物料导出失败!");
+    }
+
+    file.close();
+}
+
+void ProductManageWgt::slot_export_count_result()
+{
+    QString dtStr=u8"e:/已点物料信息"+QDateTime::currentDateTime().toString("yyyyMMddHHmmss")+".csv";
+    QFile file;
+    file.setFileName(dtStr);
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        QLOG_WARN()<<"Open file Failed!";
+        return;
+    }
+
+    QTextStream out(&file);
+    QString s1 = "SN";
+    QString s2 = "ShuLiang";
+    QString s3 = "RiQi";
+    QString s4 = "ShiJian";
+    out<<s1<<",";
+    out<<s2<<",";
+    out<<s3<<",";
+    out<<s4<<",";
+    out<<"\n";
+
+    QString strSql = QString("select * from public.%1 where \"Count_Date\"='%2'").
+            arg(constCountResultTable).arg(m_pDateEdit->text());
+
+    QSqlQuery queryResult;
+    if(GDataFactory::get_pgsql()->GetQueryResult(strSql,queryResult))
+    {
+        QLOG_TRACE()<<u8"get product info, query database success!";
+        while(queryResult.next())
+        {
+            out<<queryResult.value(1).toString()<<",";
+            out<<queryResult.value(2).toString()<<",";
+            out<<queryResult.value(3).toString()<<",";
+            out<<queryResult.value(4).toString()<<",";
+            out<<"\n";
+        }
+        IMessageBox* msgBox = new IMessageBox(2);
+        msgBox->warning(u8"点料结果导出成功!");
+    }
+    else
+    {
+        QLOG_WARN()<<u8"get product info, query database failed!";
+        IMessageBox* msgBox = new IMessageBox(3);
+        msgBox->warning(u8"点料结果导出失败!");
+    }
+
+    file.close();
 }

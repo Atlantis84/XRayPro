@@ -41,6 +41,7 @@
 #include "imessagebox.h"
 #include <QDir>
 #include "AlgoQRCode.h"
+#include "logindialog.h"
 using namespace std;
 using namespace cv;
 #define READ_PLC  0x01 //function code of read plc
@@ -146,8 +147,12 @@ private:
     QStringList m_pListCodeFromScanner;
 
     bool m_pUseCamera;
+    QString m_pCurrentUserAccount;
 
 public:
+    void set_user_account(QString strAccount){m_pCurrentUserAccount = strAccount;}
+    QString get_user_account(){return m_pCurrentUserAccount;}
+    void submit_msg_to_DB(int amount);
     void set_use_camera_sign(bool b){m_pUseCamera = b;}
     bool get_use_camera_sign(){return m_pUseCamera;}
     QStringList get_code_list()
@@ -178,8 +183,8 @@ public:
         m_pCurrentSecondSectionCode = strCode;
     }
     void raw_to_mat(unsigned short* pBuffer, const int nWidth, const int nHeight);
-    QImage mat_to_qimage(const Mat& cvImage);
-    QPixmap mat_to_pixmap(const Mat& cvImage);
+    QImage mat_to_qimage(const int saveSign,const Mat& cvImage);
+    QPixmap mat_to_pixmap(const int saveSign,const Mat& cvImage);
 
     void set_sender_power(QString strStyle);
 
@@ -519,6 +524,13 @@ public:
             m_pAlgoQRCode = new AlgoQRCode();
         return m_pAlgoQRCode;
     }
+
+    static LoginDialog* get_login_dialog()
+    {
+        if(m_pLoginDialog == nullptr)
+            m_pLoginDialog = new LoginDialog();
+        return m_pLoginDialog;
+    }
 private:
     static TopWidget* m_pTopWgt;
     static MainWindow* m_pMainWindow;
@@ -549,6 +561,7 @@ private:
     static WaitCountWgt* m_pWaitCountWgt;
     static QNetworkAccessManager *m_pAccessManager;
     static AlgoQRCode* m_pAlgoQRCode;
+    static LoginDialog* m_pLoginDialog;
 signals:
     void signal_spread_pixmap_to_ui(const QPixmap pm);
     void signal_serial_data(QByteArray data);

@@ -38,12 +38,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-
-//    if(GDataFactory::get_welcome_dlg()->exec() == QDialog::Accepted)
-//        ;
-//    else
-//        QApplication::exit(1);
-
     Logger& logger = Logger::instance();
     const QString sLogPath(QDir(QApplication::applicationDirPath()).filePath("log.txt"));
     DestinationPtr fileDestination(DestinationFactory::MakeFileDestination(sLogPath, EnableLogRotation, MaxSizeBytes(512*1024), MaxOldLogCount(5)));
@@ -106,6 +100,8 @@ int main(int argc, char *argv[])
         logger.setLoggingLevel(QsLogging::OffLevel);
 
     GDataFactory::get_factory()->connections_initialization();
+
+    GDataFactory::get_login_dialog()->exec();
 
     GDataFactory::get_factory()->set_system_status(Init_Status);
     GDataFactory::get_monitor_thread()->start();

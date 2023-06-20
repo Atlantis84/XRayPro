@@ -3,6 +3,8 @@
 #include "QsLog.h"
 #include <QProcess>
 #include <QTextCodec>
+#include <QApplication>
+#include <QEventLoop>
 MonitorThread::MonitorThread()
 {
 
@@ -11,7 +13,7 @@ bool sendsign = false;
 void MonitorThread::run()
 {
     while (1) {
-
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         while(1)
         {
             emit signal_send_receiver_info(2,u8"»½ÐÑPLCÖÐ...");

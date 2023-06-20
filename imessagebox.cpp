@@ -45,6 +45,11 @@ IMessageBox::IMessageBox(int infoLevel)
     case 1:
         break;
     case 2:
+        labelIcon->setPixmap(QPixmap(":/icon/start.png"));
+        hBox1->addWidget(labelIcon);
+        hBox1->addWidget(labelInfo);
+        hBox1->setStretch(0,3);
+        hBox1->setStretch(1,7);
         break;
     case 3:
         labelIcon->setPixmap(QPixmap(":/icon/error.png"));
